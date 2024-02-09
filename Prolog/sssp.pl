@@ -177,4 +177,6 @@ modify_key(H, NewKey, OldKey, V) :-
     assert(heap_entry(H, I, NewKey, V)).
 
 %Predicato che restituisce la lista degli elementi della heap
-list_heap(H) :- listing(heap_entry(H, _, _, _)).
+list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
+
+% heap_entry ha H, P, K, V dove H è l'heap, P è la posizione, K è la chiave e V è il valore 
