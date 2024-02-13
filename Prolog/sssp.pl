@@ -67,19 +67,9 @@ list_graph(G) :-
     writeln("Archi:"),
     list_edges(G).
 
-%------------------------------ Algoritmo di SSSP (da fare dopo) -----------------------------%
+%------------------------------ Algoritmo di SSSP ----------------------------%
 
 :- dynamic distance/3, previous/3, visited/2.
-
-distance(G, V, D) :- 
-    vertex(G, V). %bohhh ? ? ? 
-
-visited(G, V) :- 
-    vertex(G, V). %bohhh ? ? ?
-
-previous(G, V, U) :- 
-    vertex(G, V), 
-    vertex(G, U). %bohhh ? ? ?
 
 %Predicato che cambia la distanza di un vertice
 change_distance(G, V, NewDist) :- 
@@ -91,11 +81,33 @@ change_previous(G, V, U) :-
     retractall(previous(G, V, _)), 
     assert(previous(G, V, U)).
 
-dijkstra_sssp(G, Source). %TODO
+initialize_distances(G, Source, [V | Vs]) :-
+    (V \= Source -> assert(distance(G, V, inf); true)),
+    initialize_distances(G, Source, Vs).
+
+extract_K_V((_, _, K, V), (K, V)).
+
+extract_K_V_list(Ns, NsList) :- 
+    maplist(extract_K_V ,Ns, NsList).
+
+dijkstra_sssp(G, Source) :-
+    retractall(distance(_, _, _)),
+    retractall(previous(_, _, _)),
+    retractall(visited(_, _)),
+    assert(distance(G, Source, 0)),
+    vertices(G, Vs),
+    initialize_distances(G, Source, Vs),
+    new_heap(G),
+    neighbors(G, Source, Ns), 
+    extract_K_V_list(Ns, NsList),
+    insert_all(G, NsList),
+    head(G, K, V),
+    distance(G, V, D).
+
 
 shortest_path(G, Source, V, Path). %TODO
 
-%------------------------------ Algoritmo di MinHeap -----------------------------%
+%------------------------------ Algoritmo di MinHeap -------------------------%
 
 :- dynamic heap/2, heap_entry/4.
 
@@ -167,6 +179,15 @@ insert(H, K, V) :-
     assert(heap_entry(H, NewS, K, V)), 
     heapify_up(H, NewS).
 
+% Caso base: se la lista è vuota, non fare nulla
+insert_all(_H, []).
+
+% Caso ricorsivo: inserisci il primo elemento della lista nella heap,
+% poi chiama ricorsivamente insert_all sulla coda della lista
+insert_all(H, [(K, V)|T]) :-
+    insert(H, K, V),
+    insert_all(H, T).
+
 %Predicato che rimuove un elemento dalla heap
 extract(H, K, V) :-
     heap(H, S), 
@@ -192,3 +213,23 @@ modify_key(H, NewKey, OldKey, V) :-
 list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
 
 % heap_entry ha H, P, K, V dove H è l'heap, P è la posizione, K è la chiave e V è il valore 
+
+
+test_1(G) :-
+    new_graph(G),
+    new_vertex(G, source),
+    new_vertex(G, a),
+    new_vertex(G, b),
+    new_vertex(G, c),
+    new_vertex(G, d),
+    new_vertex(G, e),
+    new_vertex(G, final),
+    new_edge(G, a, b, 6),
+    new_edge(G, source, a, 2),
+    new_edge(G, source, d, 8),
+    new_edge(G, a, c, 2),
+    new_edge(G, d, c, 2),
+    new_edge(G, d, e, 3),
+    new_edge(G, c, e, 9),
+    new_edge(G, e, final, 1),
+    new_edge(G, b, final, 5).
