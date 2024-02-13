@@ -104,7 +104,9 @@ new_heap(H) :- heap(H, _S), !.
 new_heap(H) :- assert(heap(H, 0)), !.
 
 %Predicato che cancella l'heap
-delete_heap(H) :- retractall(heap(H, _S)).
+delete_heap(H) :- 
+    retractall(heap(H, _S)),
+    retractall(heap_entry(H, _, _, _)), !.
 
 %Predicato che ritorna true se la dimensione della heap è S
 heap_size(H, S) :- heap(H, S).
@@ -181,7 +183,8 @@ extract(H, K, V) :-
 modify_key(H, NewKey, OldKey, V) :- 
     heap_entry(H, I, OldKey, V), 
     retractall(heap_entry(H, I, OldKey, V)), 
-    assert(heap_entry(H, I, NewKey, V)).
+    assert(heap_entry(H, I, NewKey, V)),
+    (NewKey < OldKey -> heapify_up(H, I) ; heapify_down(H, I)).
 
 %Predicato che restituisce la lista degli elementi della heap
 list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
