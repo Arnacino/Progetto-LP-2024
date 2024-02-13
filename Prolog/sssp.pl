@@ -69,6 +69,8 @@ list_graph(G) :-
 
 %------------------------------ Algoritmo di SSSP (da fare dopo) -----------------------------%
 
+:- dynamic distance/3, previous/3, visited/2.
+
 distance(G, V, D) :- 
     vertex(G, V). %bohhh ? ? ? 
 
