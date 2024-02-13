@@ -17,12 +17,19 @@ new_graph(G) :- graph(G), !.
 new_graph(G) :- assert(graph(G)), !.
 
 %cancello il grafo
-delete_graph(G) :- retract(graph(G)).
+delete_graph(G) :- 
+    graph(G),
+    retractall(graph(G)),
+    retractall(vertex(G, _)),
+    retractall(edge(G, _, _, _)).
 
 %Predicato che crea un vertice
 %step 1: controllo se esiste già, se esiste ritorna true e basta
 %step 2: se non esiste cancello tutti i vertici con lo stesso nome e lo asserisco (previene duplicati)
-new_vertex(G, V) :- vertex(G, V), !.
+new_vertex(G, V) :- 
+    graph(G),
+    vertex(G, V), !.
+
 new_vertex(G, V) :- 
     retractall(vertex(G, V)), 
     assert(vertex(G, V)), !.
