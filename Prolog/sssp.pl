@@ -81,53 +81,69 @@ change_previous(G, V, U) :-
     retractall(previous(G, V, _)), 
     assert(previous(G, V, U)).
 
-initialize_distances(G, Source, [V | Vs]) :-
-    (V \= Source -> assert(distance(G, V, inf); true)),
-    initialize_distances(G, Source, Vs).
+%Predicato che inizializza le distanze da tutti i vertici a infinito
+initialize_distances(_, _, []). % Caso base: la lista è vuota
+initialize_distances(G, Source, [V | Rest]) :-
+    (V = Source -> change_distance(G, V, 0); change_distance(G, V, inf)),
+    initialize_distances(G, Source, Rest).
 
-extract_K_V((_, _, K, V), (K, V)).
+initialize_heap(_, []).
+initialize_heap(G, [V | Rest]) :- 
+    distance(G, V, D),
+    insert(G, D, V),
+    initialize_heap(G, Rest).
 
-extract_K_V_list(Ns, NsList) :- 
-    maplist(extract_K_V ,Ns, NsList).
+extractV((_, _, V, _), (V)).
+
+extractV_list(Ns, NsList) :- 
+    maplist(extractV ,Ns, NsList).
 
 dijkstra_sssp(G, Source) :-
     % cancella tutte le distanze, i predecessori e i visitati perché inizia l'algoritmo
     retractall(distance(_, _, _)),
     retractall(previous(_, _, _)),
     retractall(visited(_, _)),
-    % inizializza distanza sorgente a 0
-    change_distance(G, Source, 0),
     vertices(G, Vs),
-    % inizializza distanze da tutti i vertici a infinito
+    % inizializza distanze da tutti i vertici a infinito e da Source a 0
     initialize_distances(G, Source, Vs),
+    assert(previous(G, Source, Source)),
     new_heap(G),
     % inserisce tutti i nodi nella heap
-    insert_all(G, Vs),
+    initialize_heap(G, Vs),
     dijkstra(G, Source).
 
-dijkstra(G, Np) :- 
+dijkstra(G, _) :-
+    empty(G),
+    !.
+
+dijkstra(G, Natt) :- 
     not_empty(G),
-    extract(G, K, V),
-    assert(visited(G, V)),
-    assert(previous(G, Np, U)),
-    neighbors(G, V, Ns),
-    extract_K_V_list(Ns, NsList),
-    process_neighbors(G, Np, NsList),
-    head(G, K1, V1),
-    dijkstra(G, V1).
+    previous(G, Natt, Nprec),
+    extract(G, _, Natt),
+    assert(visited(G, Natt)),
+    assert(previous(G, Natt, Nprec)),
+    neighbors(G, Natt, Ns),
+    extractV_list(Ns, NsList),
+    process_neighbors(G, Natt, NsList),
+    head(G, _, Nsucc),
+    dijkstra(G, Nsucc).
 
-
+% Se un nodo è visitato allora non è nella heap e quindi non è possibile modificarne la chiave 
+% quindi la sua distanza si prende da distance e non dalla heap.
+process_neighbors(_, _, []).
 % Predicato che processa i vicini di un vertice   
-process_neighbors(G, Source, [(K, V) | Rest]) :-
-    distance(G, V, D),
-    distance(G, Source, DU),
-    NewDistance is DU + K,
-    (D = inf -> 
-        assert(distance(G, V, NewDistance)), change_previous(G, V, Source); 
-        (D > NewDistance -> 
-        change_distance(G, V, NewDistance), change_previous(G, V, U); 
-        true)),
-    process_neighbors(G, Source, Rest).
+process_neighbors(G, Natt, [ V | Rest]) :-
+    write(" vertex: "), writeln(V),
+    heap_entry(G, _, K, V),
+    write(" key: "), writeln(K),
+    edge(G, Natt, V, W),
+    distance(G, Natt, Datt),
+    NewDistance is W + Datt,
+    (K > NewDistance -> 
+        change_distance(G, V, NewDistance), 
+        change_previous(G, V, Natt), 
+        modify_key(G, NewDistance, K, V)),
+    process_neighbors(G, Natt, Rest).
 
 % shortest_path(G, Source, V, Path). %TODO
 
@@ -175,7 +191,7 @@ heapify_up(_, _).  % Base case: do nothing
 
 %Predicato che quando rimuovi un elemento fa diventare l'heap un minheap (vedi algo)
 heapify_down(H, I) :-
-    heap(H, S),  % Get the size of the heap
+    heap(H, _),  % Get the size of the heap
     LeftI is 2 * I,  % Compute the index of the left child
     RightI is 2 * I + 1,  % Compute the index of the right child
     heap_entry(H, I, K, V),  % Get the key and value of the current entry
@@ -235,7 +251,6 @@ modify_key(H, NewKey, OldKey, V) :-
 list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
 
 % heap_entry ha H, P, K, V dove H è l'heap, P è la posizione, K è la chiave e V è il valore 
-
 
 test_1(G) :-
     new_graph(G),
