@@ -84,7 +84,7 @@ change_previous(G, V, U) :-
 %Predicato che inizializza le distanze da tutti i vertici a infinito
 initialize_distances(_, _, []). % Caso base: la lista è vuota
 initialize_distances(G, Source, [V | Rest]) :-
-    (V = Source -> change_distance(G, V, 0); change_distance(G, V, inf)),
+    (V = Source -> assert(distance(G, V, 0)); assert(distance(G, V, inf))),
     initialize_distances(G, Source, Rest).
 
 initialize_heap(_, []).
@@ -113,16 +113,18 @@ dijkstra_sssp(G, Source) :-
     dijkstra(G, Source).
 
 dijkstra(G, _) :-
-    empty(G),
-    !.
+    empty(G), !.
 
 dijkstra(G, Natt) :- 
+    write("Nodo da controllare: "), writeln(Natt),
     not_empty(G),
     previous(G, Natt, Nprec),
+    write("Nodo Precedente: "), writeln(Nprec),
     extract(G, _, Natt),
     assert(visited(G, Natt)),
     assert(previous(G, Natt, Nprec)),
     neighbors(G, Natt, Ns),
+    write("Vicini: "), writeln(Ns),
     extractV_list(Ns, NsList),
     process_neighbors(G, Natt, NsList),
     head(G, _, Nsucc),
@@ -133,16 +135,17 @@ dijkstra(G, Natt) :-
 process_neighbors(_, _, []).
 % Predicato che processa i vicini di un vertice   
 process_neighbors(G, Natt, [ V | Rest]) :-
-    write(" vertex: "), writeln(V),
-    heap_entry(G, _, K, V),
-    write(" key: "), writeln(K),
+    visited(G, V) -> distance(G, V, K), distance_calc(G, Natt, V, K, Rest); 
+    heap_entry(G, _, K, V), distance_calc(G, Natt, V, K, Rest).
+
+distance_calc(G, Natt, V, K, Rest):-
     edge(G, Natt, V, W),
     distance(G, Natt, Datt),
     NewDistance is W + Datt,
     (K > NewDistance -> 
         change_distance(G, V, NewDistance), 
         change_previous(G, V, Natt), 
-        modify_key(G, NewDistance, K, V)),
+        modify_key(G, NewDistance, K, V); true),
     process_neighbors(G, Natt, Rest).
 
 % shortest_path(G, Source, V, Path). %TODO
@@ -180,7 +183,7 @@ heapify_up(H, I) :-
     ParentI is I div 2,  % Compute the index of the parent
     heap_entry(H, I, K, V),  % Get the key and value of the current entry
     heap_entry(H, ParentI, ParentK, ParentV),  % Get the key and value of the parent entry
-    K < ParentK,  % Continue if the key of the current entry is less than the key of the parent entry
+    (K < ParentK ; K =:= ParentK),  % Continue if the key of the current entry is less than the key of the parent entry, or if the keys are equal and the value of the current entry is less than the value of the parent entry
     % Swap the current entry and the parent entry
     retractall(heap_entry(H, I, K, V)),
     retractall(heap_entry(H, ParentI, ParentK, ParentV)),
