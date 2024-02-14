@@ -112,18 +112,24 @@ dijkstra(G, Np) :-
     assert(previous(G, Np, U)),
     neighbors(G, V, Ns),
     extract_K_V_list(Ns, NsList),
-    process_neighbors(G, Np, NsList).
+    process_neighbors(G, Np, NsList),
+    head(G, K1, V1),
+    dijkstra(G, V1).
 
 
 % Predicato che processa i vicini di un vertice   
 process_neighbors(G, Source, [(K, V) | Rest]) :-
     distance(G, V, D),
-    previous(G, V, U),
-    distance(G, U, DU),
-    (D > K + DU -> change_distance(G, V, K + DU), change_previous(G, V, U); true),
+    distance(G, Source, DU),
+    NewDistance is DU + K,
+    (D = inf -> 
+        assert(distance(G, V, NewDistance)), change_previous(G, V, Source); 
+        (D > NewDistance -> 
+        change_distance(G, V, NewDistance), change_previous(G, V, U); 
+        true)),
     process_neighbors(G, Source, Rest).
 
-shortest_path(G, Source, V, Path). %TODO
+% shortest_path(G, Source, V, Path). %TODO
 
 %------------------------------ Algoritmo di MinHeap -------------------------%
 
