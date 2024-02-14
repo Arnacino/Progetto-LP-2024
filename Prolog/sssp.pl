@@ -91,19 +91,37 @@ extract_K_V_list(Ns, NsList) :-
     maplist(extract_K_V ,Ns, NsList).
 
 dijkstra_sssp(G, Source) :-
+    % cancella tutte le distanze, i predecessori e i visitati perché inizia l'algoritmo
     retractall(distance(_, _, _)),
     retractall(previous(_, _, _)),
     retractall(visited(_, _)),
-    assert(distance(G, Source, 0)),
+    % inizializza distanza sorgente a 0
+    change_distance(G, Source, 0),
     vertices(G, Vs),
+    % inizializza distanze da tutti i vertici a infinito
     initialize_distances(G, Source, Vs),
     new_heap(G),
-    neighbors(G, Source, Ns), 
-    extract_K_V_list(Ns, NsList),
-    insert_all(G, NsList),
-    head(G, K, V),
-    distance(G, V, D).
+    % inserisce tutti i nodi nella heap
+    insert_all(G, Vs),
+    dijkstra(G, Source).
 
+dijkstra(G, Np) :- 
+    not_empty(G),
+    extract(G, K, V),
+    assert(visited(G, V)),
+    assert(previous(G, Np, U)),
+    neighbors(G, V, Ns),
+    extract_K_V_list(Ns, NsList),
+    process_neighbors(G, Np, NsList).
+
+
+% Predicato che processa i vicini di un vertice   
+process_neighbors(G, Source, [(K, V) | Rest]) :-
+    distance(G, V, D),
+    previous(G, V, U),
+    distance(G, U, DU),
+    (D > K + DU -> change_distance(G, V, K + DU), change_previous(G, V, U); true),
+    process_neighbors(G, Source, Rest).
 
 shortest_path(G, Source, V, Path). %TODO
 
@@ -148,7 +166,6 @@ heapify_up(H, I) :-
     assert(heap_entry(H, ParentI, K, V)),
     heapify_up(H, ParentI).  % Recursively heapify up from the parent index
 heapify_up(_, _).  % Base case: do nothing
-%COPILOT HA CUCINATO QUESTO PREDICATO
 
 %Predicato che quando rimuovi un elemento fa diventare l'heap un minheap (vedi algo)
 heapify_down(H, I) :-
@@ -168,7 +185,6 @@ heapify_down(H, I) :-
     assert(heap_entry(H, MinI, K, V)),
     heapify_down(H, MinI).  % Recursively heapify down from the smallest child
 heapify_down(_, _).  % Base case: do nothing
-%COPILOT HA CUCINATO QUESTO PREDICATO
 
 %Predicato che inserisce un elemento nella heap
 insert(H, K, V) :- 
