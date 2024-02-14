@@ -100,6 +100,7 @@ extractV_list(Ns, NsList) :-
 
 dijkstra_sssp(G, Source) :-
     % cancella tutte le distanze, i predecessori e i visitati perché inizia l'algoritmo
+    vertex(G, Source),
     retractall(distance(_, _, _)),
     retractall(previous(_, _, _)),
     retractall(visited(_, _)),
@@ -273,3 +274,28 @@ test_1(G) :-
     new_edge(G, c, e, 9),
     new_edge(G, e, final, 1),
     new_edge(G, b, final, 5).
+
+
+%test inventato a 9 nodi
+test_2(G) :-
+    new_graph(G),
+    new_vertex(G, a),
+    new_vertex(G, b),
+    new_vertex(G, c),
+    new_vertex(G, d),
+    new_vertex(G, e),
+    new_vertex(G, f),
+    new_vertex(G, g),
+    new_vertex(G, h),
+    new_vertex(G, i),
+    new_edge(G, a, b, 1),
+    new_edge(G, b, c, 4),
+    new_edge(G, d, e, 2),
+    new_edge(G, e, f, 5),
+    new_edge(G, g, h, 2),
+    new_edge(G, h, i, 8),
+    new_edge(G, a, d, 3),
+    new_edge(G, d, g, 9),
+    new_edge(G, b, e, 4),
+    new_edge(G, e, h, 9),
+    new_edge(G, c, f, 6).
