@@ -149,7 +149,11 @@ distance_calc(G, Natt, V, K, Rest):-
         modify_key(G, NewDistance, K, V); true),
     process_neighbors(G, Natt, Rest).
 
-% shortest_path(G, Source, V, Path). %TODO
+shortest_path(G, Source, V, Path) :- 
+    vertex(G, Source),
+    vertex(G, V),
+    previous(G, V, Prev), 
+    shortest_path(G, Source, V, [Prev | Path]).
 
 %------------------------------ Algoritmo di MinHeap -------------------------%
 
