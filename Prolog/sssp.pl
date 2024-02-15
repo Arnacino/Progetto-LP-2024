@@ -245,44 +245,61 @@ heapify_up(_, _).
 heapify_down(H, I) :-
     heap(H, _),
     LeftI is 2 * I,
+    heap_entry(H, I, K, V),
+    heap_entry(H, LeftI, LeftK, LeftV),
+    RightI is 2 * I + 1,
+    heap_entry(H, RightI, RightK, _),
+    LeftK =< RightK,
+    LeftK =< K,
+    retractall(heap_entry(H, I, K, V)),
+    retractall(heap_entry(H, LeftI, LeftK, LeftV)),
+    assert(heap_entry(H, I, LeftK, LeftV)),
+    assert(heap_entry(H, LeftI, K, V)),
+    heapify_down(H, LeftI), !.
+
+heapify_down(H, I) :-
+    heap(H, _),
     RightI is 2 * I + 1,
     heap_entry(H, I, K, V),
+    LeftI is 2 * I,
+    heap_entry(H, RightI, RightK, RightV),
     heap_entry(H, LeftI, LeftK, _),
-    LeftK < K,
-    MinI = LeftI, MinK = LeftK,
-    check_right_child(H, RightI, MinI, MinK, I, K, V), !.
+    RightK =< LeftK,
+    RightK =< K,
+    retractall(heap_entry(H, I, K, V)),
+    retractall(heap_entry(H, RightI, RightK, RightV)),
+    assert(heap_entry(H, I, RightK, RightV)),
+    assert(heap_entry(H, RightI, K, V)),
+    heapify_down(H, RightI), !.
 
 heapify_down(H, I) :-
     heap(H, _),
     LeftI is 2 * I,
+    heap_entry(H, I, K, V),
+    heap_entry(H, LeftI, LeftK, LeftV),
+    RightI is 2 * I + 1,
+    \+ heap_entry(H, RightI, _, _),
+    LeftK =< K,
+    retractall(heap_entry(H, I, K, V)),
+    retractall(heap_entry(H, LeftI, LeftK, LeftV)),
+    assert(heap_entry(H, I, LeftK, LeftV)),
+    assert(heap_entry(H, LeftI, K, V)), !.
+
+heapify_down(H, I) :-
+    heap(H, _),
     RightI is 2 * I + 1,
     heap_entry(H, I, K, V),
-    \+ (heap_entry(H, LeftI, LeftK, _), LeftK < K),
-    MinI = I, MinK = K,
-    check_right_child(H, RightI, MinI, MinK, I, K, V), !.
-
-heapify_down(_, _).
-
-check_right_child(H, RightI, MinI, MinK, I, K, V) :-
-    heap_entry(H, RightI, RightK, _),
-    RightK < MinK,
-    MinI = RightI, MinK = RightK,
-    swap_and_heapify(H, MinI, MinK, I, K, V), !.
-
-check_right_child(H, RightI, MinI, MinK, I, K, V) :-
-    \+ (heap_entry(H, RightI, RightK, _), RightK < MinK),
-    swap_and_heapify(H, MinI, MinK, I, K, V).
-
-swap_and_heapify(H, MinI, MinK, I, K, V) :-
-    MinI \= I,
-    heap_entry(H, MinI, MinK, MinV),
+    heap_entry(H, RightI, RightK, RightV),
+    LeftI is 2 * I,
+    \+ heap_entry(H, LeftI, _, _),
+    RightK =< K,
     retractall(heap_entry(H, I, K, V)),
-    retractall(heap_entry(H, MinI, MinK, MinV)),
-    assert(heap_entry(H, I, MinK, MinV)),
-    assert(heap_entry(H, MinI, K, V)),
-    heapify_down(H, MinI), !.
+    retractall(heap_entry(H, RightI, RightK, RightV)),
+    assert(heap_entry(H, I, RightK, RightV)),
+    assert(heap_entry(H, RightI, K, V)), !.
 
-swap_and_heapify(_, _, _, _, _, _).
+
+heapify_down(_,_).
 
 %Predicato che inserisce un elemento nella heap
 insert(H, K, V) :- 
@@ -299,6 +316,14 @@ extract(H, _, _) :-
     S =:= 0, 
     !, 
     fail.
+
+extract(H, K, V) :- 
+    heap(H, S), 
+    S =:= 1, 
+    heap_entry(H, 1, K, V),
+    retractall(heap(H, S)),
+    assert(heap(H, 0)),
+    retractall(heap_entry(H, 1, K, V)), !.
 
 extract(H, K, V) :-
     heap(H, S), 
