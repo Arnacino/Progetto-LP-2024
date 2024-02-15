@@ -10,22 +10,15 @@ graph(G) :- clause(graph(G), true).
 vertex(G, V) :- clause(vertex(G, V), true).
 edge(G, U, V, Weight) :- clause(edge(G, U, V, Weight), true).
 
-%Predicato che crea un grafo
-%step 1: controllo se esiste già, se esiste ritorna true e basta
-%step 2: se non esiste lo creo e lo asserisco
 new_graph(G) :- graph(G), !.
 new_graph(G) :- assert(graph(G)), !.
 
-%cancello il grafo
 delete_graph(G) :- 
     graph(G),
     retractall(graph(G)),
     retractall(vertex(G, _)),
     retractall(edge(G, _, _, _)).
 
-%Predicato che crea un vertice
-%step 1: controllo se esiste già, se esiste ritorna true e basta
-%step 2: se non esiste cancello tutti i vertici con lo stesso nome e lo asserisco (previene duplicati)
 new_vertex(G, V) :- 
     graph(G),
     vertex(G, V), !.
@@ -34,30 +27,26 @@ new_vertex(G, V) :-
     retractall(vertex(G, V)), 
     assert(vertex(G, V)), !.
 
-%Predicato che ritorna true se tutti i vertici nella lista Vs esistono nel grafo G
 vertices(G, Vs) :- findall(V, vertex(G, V), Vs).
 
-%Predicato che stampa tutti i vertici del grafo G
 list_vertices(G) :- listing(vertex(G, _)).
 
-%Predicato che crea un arco (se l'arco non ha peso il peso è 1)
 new_edge(G, U, V) :- new_edge(G, U, V, 1).
-new_edge(G, U, V, Weight) :- edge(G, U, V, Weight), !.
+
+new_edge(G, U, V, _) :- edge(G, U, V, _), !.
+
 new_edge(G, U, V, Weight) :- 
     retractall(edge(G, U, V, Weight)), 
     assert(edge(G, U, V, Weight)),
     !.
 
-%Predicato che ritorna true se tutti gli archi nella lista Es esistono nel grafo G
 edges(G, Es) :- 
     findall((U, V, Weight), edge(G, U, V, Weight), Es).
 
-%Predicato che stampa tutti gli archi uscenti del vertice V
 neighbors(G, V, Ns) :- 
     vertex(G, V), 
     findall((G, V, N, Weight), edge(G, V, N, Weight), Ns).
 
-% Predicato che stampa tutti gli archi del grafo G
 list_edges(G) :- listing(edge(G, _, _, _)).
 
 %Predicato che stampa il grafo G
@@ -72,14 +61,14 @@ list_graph(G) :-
 :- dynamic distance/3, previous/3, visited/2.
 
 %Predicato che cambia la distanza di un vertice
-change_distance(G, V, NewDist) :- 
+change_distance(G, V, NewD) :- 
     retractall(distance(G, V, _)), 
-    assert(distance(G, V, NewDist)).
+    assert(distance(G, V, NewD)).
 
 
-change_previous(G, V, U) :- 
+change_previous(G, V, NewU) :- 
     retractall(previous(G, V, _)), 
-    assert(previous(G, V, U)).
+    assert(previous(G, V, NewU)).
 
 %Predicato che inizializza le distanze da tutti i vertici a infinito
 initialize_distances(_, _, []). % Caso base: la lista è vuota
@@ -117,23 +106,21 @@ dijkstra(G, _) :-
     empty(G), !.
 
 dijkstra(G, Natt) :- 
-    write("Nodo da controllare: "), writeln(Natt),
     not_empty(G),
     previous(G, Natt, Nprec),
-    write("Nodo Precedente: "), writeln(Nprec),
     extract(G, _, Natt),
     assert(visited(G, Natt)),
     assert(previous(G, Natt, Nprec)),
     neighbors(G, Natt, Ns),
-    write("Vicini: "), writeln(Ns),
     extractV_list(Ns, NsList),
     process_neighbors(G, Natt, NsList),
-    head(G, _, Nsucc),
-    dijkstra(G, Nsucc).
+    (not_empty(G) ->
+    head(G, _, Nsucc), dijkstra(G, Nsucc); true
+    ).
 
 % Se un nodo è visitato allora non è nella heap e quindi non è possibile modificarne la chiave 
 % quindi la sua distanza si prende da distance e non dalla heap.
-process_neighbors(_, _, []).
+process_neighbors(_, _, []) :- !.
 % Predicato che processa i vicini di un vertice   
 process_neighbors(G, Natt, [ V | Rest]) :-
     visited(G, V) -> distance(G, V, K), distance_calc(G, Natt, V, K, Rest); 
@@ -152,8 +139,16 @@ distance_calc(G, Natt, V, K, Rest):-
 shortest_path(G, Source, V, Path) :- 
     vertex(G, Source),
     vertex(G, V),
-    previous(G, V, Prev), 
-    shortest_path(G, Source, V, [Prev | Path]).
+    build_path(G, Source, V, BuiltPath),
+    reverse(BuiltPath, Path).
+
+build_path(_, Source, V, []) :- 
+    V = Source, !.
+
+build_path(G, Source, V, [(G, Prev, V, W) | Path1]) :- 
+    previous(G, V, Prev),
+    edge(G, Prev, V, W),
+    build_path(G, Source, Prev, Path1).
 
 %------------------------------ Algoritmo di MinHeap -------------------------%
 
@@ -180,7 +175,10 @@ empty(H) :- heap(H, 0).
 not_empty(H) :- heap(H, S), S > 0.
 
 %Predicato che ritorna true se l'elemento che gli passi è la testa della heap
-head(H, K, V) :- heap_entry(H, 1, K, V).
+head(H, K, V) :- 
+    heap_size(H, S),
+    S = 0 -> fail;
+    heap_entry(H, 1, K, V).
 
 %Predicato che quando inserisci un elemento fa diventare l'heap un minheap (vedi algo)
 heapify_up(H, I) :-
@@ -303,3 +301,10 @@ test_2(G) :-
     new_edge(G, b, e, 4),
     new_edge(G, e, h, 9),
     new_edge(G, c, f, 6).
+
+test_3(G) :- 
+    new_graph(G),
+    new_vertex(G, a),
+    new_vertex(G, b),
+    new_edge(G, b, a, 1),
+    new_edge(G, a, b, 1).
