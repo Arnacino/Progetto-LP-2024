@@ -71,114 +71,104 @@ change_previous(G, V, NewU) :-
 visited(G, V) :- clause(visited(G, V), true), !.
 visited(G, V) :- assert(visited(G, V)).
 
-%Predicato che inizializza le distanze da tutti i vertici a infinito
-initialize_distances(_, _, []). % Caso base: la lista è vuota
-initialize_distances(G, Source, [Source | Rest]) :-
-    assert(distance(G, Source, 0)),
-    initialize_distances(G, Source, Rest).
 
-initialize_distances(G, Source, [V | Rest]) :-
-    V \= Source,
-    assert(distance(G, V, inf)),
-    initialize_distances(G, Source, Rest).
+initialize_distance(_, []) :- !.
+initialize_distance(G, [V | Rest]) :- 
+    visited(G, V),
+    assert(distance(G, V, 0)), 
+    initialize_distance(G, Rest), !.
+
+initialize_distance(G, [V | Rest]) :- 
+    assert(distance(G, V, inf)), 
+    initialize_distance(G, Rest), !.
 
 initialize_heap(_, []).
 initialize_heap(G, [V | Rest]) :- 
     distance(G, V, D),
     insert(G, D, V),
-    initialize_heap(G, Rest).
-
-extractV((_, _, V, _), (V)).
-
-extractV_list(Ns, NsList) :- 
-    maplist(extractV ,Ns, NsList).
+    initialize_heap(G, Rest), !.
 
 dijkstra_sssp(G, Source) :-
-    % cancella tutte le distanze, i predecessori e i visitati perché inizia l'algoritmo
     vertex(G, Source),
-    retractall(distance(_, _, _)),
-    retractall(previous(_, _, _)),
-    retractall(visited(_, _)),
-    vertices(G, Vs),
-    % inizializza distanze da tutti i vertici a infinito e da Source a 0
-    initialize_distances(G, Source, Vs),
+    retractall(distance(G, _, _)),
+    retractall(previous(G, _, _)),
+    retractall(visited(G, _)),
+    assert(visited(G, Source)),
     assert(previous(G, Source, Source)),
     new_heap(G),
-    % inserisce tutti i nodi nella heap
+    vertices(G, Vs),
+    initialize_distance(G, Vs),
     initialize_heap(G, Vs),
+    neighbors(G, Source, Ns),
+    process_neighbors(G, Source, Ns),
     dijkstra(G, Source).
 
-dijkstra(G, _) :-
-    empty(G), !.
-
-dijkstra(G, Natt) :-
+dijkstra(G, Natt) :- 
+    \+distance(G, Natt, 0),
     not_empty(G),
-    previous(G, Natt, Nprec),
     extract(G, _, Natt),
-    visited(G, Natt),
-    assert(previous(G, Natt, Nprec)),
+    assert(visited(G, Natt)),
     neighbors(G, Natt, Ns),
-    extractV_list(Ns, NsList),
-    process_neighbors(G, Natt, NsList),
-    not_empty(G),
+    process_neighbors(G, Natt, Ns),
     head(G, _, Nsucc),
     dijkstra(G, Nsucc), !.
 
-dijkstra(G, Natt) :-
+dijkstra(G, Natt) :- 
     not_empty(G),
-    previous(G, Natt, Nprec),
+    extract(G, _, Natt),
+    neighbors(G, Natt, Ns),
+    process_neighbors(G, Natt, Ns),
+    head(G, _, Nsucc),
+    dijkstra(G, Nsucc), !.
+
+dijkstra(G, Natt) :- 
+    not_empty(G),
     extract(G, _, Natt),
     assert(visited(G, Natt)),
-    assert(previous(G, Natt, Nprec)),
     neighbors(G, Natt, Ns),
-    extractV_list(Ns, NsList),
-    process_neighbors(G, Natt, NsList),
-    \+ not_empty(G).
+    process_neighbors(G, Natt, Ns),!.
 
-% Se un nodo è visitato allora non è nella heap e quindi non è possibile modificarne la chiave 
-% quindi la sua distanza si prende da distance e non dalla heap.
+dijkstra(G, _) :- empty(G).
+
 process_neighbors(_, _, []) :- !.
-% Predicato che processa i vicini di un vertice   
-process_neighbors(G, Natt, [ V | Rest]) :-
-    visited(G, V),
-    distance(G, V, K),
-    distance_calc(G, Natt, V, K, Rest), !.
+process_neighbors(G, Np, [ (G, Np, Narr, W)| Rest]) :-
+    \+visited(G, Narr),
+    vertex(G, Narr), 
+    distance(G, Np, Dp),
+    distance(G, Narr, Da),
+    NewD is Dp + W,
+    NewD < Da,
+    change_distance(G, Narr, NewD),
+    change_previous(G, Narr, Np),
+    modify_key(G, NewD, Da, Narr),
+    process_neighbors(G, Np, Rest), !.
 
-process_neighbors(G, Natt, [ V | Rest]) :-
-    \+ visited(G, V),
-    heap_entry(G, _, K, V),
-    distance_calc(G, Natt, V, K, Rest).
+process_neighbors(G, Np, [ (G, Np, Narr, W)| Rest]) :-
+    \+visited(G, Narr),
+    vertex(G, Narr), 
+    distance(G, Np, Dp),
+    distance(G, Narr, Da),
+    NewD is Dp + W,
+    NewD >= Da,
+    process_neighbors(G, Np, Rest), !.
 
-distance_calc(G, Natt, V, K, Rest):-
-    edge(G, Natt, V, W),
-    distance(G, Natt, Datt),
-    NewDistance is W + Datt,
-    K > NewDistance,
-    change_distance(G, V, NewDistance),
-    change_previous(G, V, Natt),
-    modify_key(G, NewDistance, K, V),
-    process_neighbors(G, Natt, Rest), !.
+process_neighbors(G, Np, [ (G, Np, Narr, _)| Rest]) :-
+    visited(G, Narr), 
+    process_neighbors(G, Np, Rest), !.
 
-distance_calc(G, Natt, V, K, Rest):-
-    edge(G, Natt, V, W),
-    distance(G, Natt, Datt),
-    NewDistance is W + Datt,
-    K =< NewDistance,
-    process_neighbors(G, Natt, Rest).
+% shortest_path(G, Source, V, Path) :- 
+%     vertex(G, Source),
+%     vertex(G, V),
+%     build_path(G, Source, V, BuiltPath),
+%     reverse(BuiltPath, Path).
 
-shortest_path(G, Source, V, Path) :- 
-    vertex(G, Source),
-    vertex(G, V),
-    build_path(G, Source, V, BuiltPath),
-    reverse(BuiltPath, Path).
+% build_path(_, Source, V, []) :- 
+%     V = Source, !.
 
-build_path(_, Source, V, []) :- 
-    V = Source, !.
-
-build_path(G, Source, V, [(G, Prev, V, W) | Path1]) :- 
-    previous(G, V, Prev),
-    edge(G, Prev, V, W),
-    build_path(G, Source, Prev, Path1).
+% build_path(G, Source, V, [(G, Prev, V, W) | Path1]) :- 
+%     previous(G, V, Prev),
+%     edge(G, Prev, V, W),
+%     build_path(G, Source, Prev, Path1).
 
 %------------------------------ Algoritmo di MinHeap -------------------------%
 
