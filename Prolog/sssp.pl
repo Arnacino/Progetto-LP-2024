@@ -64,14 +64,17 @@ change_distance(G, V, NewD) :-
     retractall(distance(G, V, _)), 
     assert(distance(G, V, NewD)).
 
+%Predicato che cambia il vertice precedente di un vertice
 change_previous(G, V, NewU) :- 
     retractall(previous(G, V, _)), 
     assert(previous(G, V, NewU)).
 
+%Predicato che ritorna la distanza di un vertice
 visited(G, V) :- clause(visited(G, V), true), !.
 visited(G, V) :- assert(visited(G, V)).
 
 
+%Predicato che inizializza la distanza di tutti i vertici
 initialize_distance(_, []) :- !.
 initialize_distance(G, [V | Rest]) :- 
     visited(G, V),
@@ -82,12 +85,14 @@ initialize_distance(G, [V | Rest]) :-
     assert(distance(G, V, inf)), 
     initialize_distance(G, Rest), !.
 
+%Predicato che inizializza l'heap
 initialize_heap(_, []).
 initialize_heap(G, [V | Rest]) :- 
     distance(G, V, D),
     insert(G, D, V),
     initialize_heap(G, Rest), !.
 
+%Predicato che inizializza dijkstra e chiama ricorsivamente dijkstra
 dijkstra_sssp(G, Source) :-
     vertex(G, Source),
     retractall(distance(G, _, _)),
@@ -103,6 +108,7 @@ dijkstra_sssp(G, Source) :-
     process_neighbors(G, Source, Ns),
     dijkstra(G, Source).
 
+%Predicato che chiama ricorsivamente dijkstra
 dijkstra(G, Natt) :- 
     \+distance(G, Natt, 0),
     not_empty(G),
@@ -130,6 +136,7 @@ dijkstra(G, Natt) :-
 
 dijkstra(G, _) :- empty(G).
 
+%Predicato che modifica la chiave di un elemento nella heap se distanza minore
 process_neighbors(_, _, []) :- !.
 process_neighbors(G, Np, [ (G, Np, Narr, W)| Rest]) :-
     \+visited(G, Narr),
@@ -156,19 +163,19 @@ process_neighbors(G, Np, [ (G, Np, Narr, _)| Rest]) :-
     visited(G, Narr), 
     process_neighbors(G, Np, Rest), !.
 
-% shortest_path(G, Source, V, Path) :- 
-%     vertex(G, Source),
-%     vertex(G, V),
-%     build_path(G, Source, V, BuiltPath),
-%     reverse(BuiltPath, Path).
+shortest_path(G, Source, V, Path) :- 
+    vertex(G, Source),
+    vertex(G, V),
+    build_path(G, Source, V, BuiltPath),
+    reverse(BuiltPath, Path).
 
-% build_path(_, Source, V, []) :- 
-%     V = Source, !.
+build_path(G, Source, V, [(G, Prev, V, W) | Path1]) :- 
+    previous(G, V, Prev),
+    edge(G, Prev, V, W),
+    build_path(G, Source, Prev, Path1), !.
 
-% build_path(G, Source, V, [(G, Prev, V, W) | Path1]) :- 
-%     previous(G, V, Prev),
-%     edge(G, Prev, V, W),
-%     build_path(G, Source, Prev, Path1).
+build_path(_, Source, V, []) :- 
+    V = Source.
 
 %------------------------------ Algoritmo di MinHeap -------------------------%
 
