@@ -8,7 +8,7 @@
 
 graph(G) :- clause(graph(G), true).
 vertex(G, V) :- clause(vertex(G, V), true).
-edge(G, U, V, Weight) :- clause(edge(G, U, V, Weight), true).
+edge(G, U, V, W) :- clause(edge(G, U, V, W), true).
 
 new_graph(G) :- graph(G), !.
 new_graph(G) :- assert(graph(G)), !.
@@ -238,7 +238,8 @@ heapify_up(H, I) :-
 
 heapify_up(_, _).
 
-%Predicato che quando rimuovi un elemento fa diventare l'heap un minheap (vedi algo)
+%Predicato che quando rimuovi 
+%un elemento fa diventare l'heap un minheap (vedi algo)
 heapify_down(H, I) :-
     heap(H, _),
     LeftI is 2 * I,
