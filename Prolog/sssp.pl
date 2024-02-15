@@ -106,7 +106,7 @@ dijkstra_sssp(G, Source) :-
     initialize_heap(G, Vs),
     neighbors(G, Source, Ns),
     process_neighbors(G, Source, Ns),
-    dijkstra(G, Source).
+    dijkstra(G, Source), !.
 
 %Predicato che chiama ricorsivamente dijkstra
 dijkstra(G, Natt) :- 
@@ -295,7 +295,6 @@ heapify_down(H, I) :-
     assert(heap_entry(H, I, RightK, RightV)),
     assert(heap_entry(H, RightI, K, V)), !.
 
-
 heapify_down(_,_).
 
 %Predicato che inserisce un elemento nella heap
@@ -354,64 +353,3 @@ modify_key(H, NewKey, OldKey, V) :-
 list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
 
 % heap_entry ha H, P, K, V dove H è l'heap, P è la posizione, K è la chiave e V è il valore 
-
-test_1(G) :-
-    new_graph(G),
-    new_vertex(G, source),
-    new_vertex(G, a),
-    new_vertex(G, b),
-    new_vertex(G, c),
-    new_vertex(G, d),
-    new_vertex(G, e),
-    new_vertex(G, final),
-    new_edge(G, a, b, 6),
-    new_edge(G, source, a, 2),
-    new_edge(G, source, d, 8),
-    new_edge(G, a, c, 2),
-    new_edge(G, d, c, 2),
-    new_edge(G, d, e, 3),
-    new_edge(G, c, e, 9),
-    new_edge(G, e, final, 1),
-    new_edge(G, b, final, 5).
-
-
-%test inventato a 9 nodi
-test_2(G) :-
-    new_graph(G),
-    new_vertex(G, a),
-    new_vertex(G, b),
-    new_vertex(G, c),
-    new_vertex(G, d),
-    new_vertex(G, e),
-    new_vertex(G, f),
-    new_vertex(G, g),
-    new_vertex(G, h),
-    new_vertex(G, i),
-    new_edge(G, a, b, 1),
-    new_edge(G, b, c, 4),
-    new_edge(G, d, e, 2),
-    new_edge(G, e, f, 5),
-    new_edge(G, g, h, 2),
-    new_edge(G, h, i, 8),
-    new_edge(G, a, d, 3),
-    new_edge(G, d, g, 9),
-    new_edge(G, b, e, 4),
-    new_edge(G, e, h, 9),
-    new_edge(G, c, f, 6).
-
-test_3(G) :- 
-    new_graph(G),
-    new_vertex(G, a),
-    new_vertex(G, b),
-    new_edge(G, b, a, 1),
-    new_edge(G, a, b, 1).
-
-    test_heap(H) :-
-        new_heap(H),
-        insert(H, 12, a),
-        insert(H, 7, b),
-        insert(H, 50, c),
-        insert(H, 12, d),
-        insert(H, 4, e),
-        insert(H, 6, f),
-        list_heap(H).
