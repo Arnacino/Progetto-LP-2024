@@ -1,6 +1,6 @@
+%%%% -*- Mode: Prolog -*- 
 %Ferrillo Samuele 900210
 %Antonico Lorenzo 904775
-
 
 %--------------------- Interfaccia per la gestione dei grafi ------------------%
 
@@ -211,7 +211,7 @@ head(H, K, V) :-
     S > 0,
     heap_entry(H, 1, K, V).
 
-%Predicato che quando inserisci un elemento fa diventare l'heap un minheap (vedi algo)
+%Predicato che quando inserisci un elemento fa diventare l'heap un minheap
 heapify_up(H, I) :-
     I > 1,
     ParentI is I div 2,
@@ -238,8 +238,7 @@ heapify_up(H, I) :-
 
 heapify_up(_, _).
 
-%Predicato che quando rimuovi 
-%un elemento fa diventare l'heap un minheap (vedi algo)
+
 heapify_down(H, I) :-
     heap(H, _),
     LeftI is 2 * I,
@@ -353,4 +352,5 @@ modify_key(H, NewKey, OldKey, V) :-
 %Predicato che restituisce la lista degli elementi della heap
 list_heap(H) :- listing(heap(H, _)), listing(heap_entry(H, _, _, _)).
 
-% heap_entry ha H, P, K, V dove H è l'heap, P è la posizione, K è la chiave e V è il valore 
+% heap_entry ha H, P, K, V dove:
+% H è l'heap, P è la posizione, K è la chiave e V è il valore 

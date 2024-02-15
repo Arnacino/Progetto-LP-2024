@@ -10,45 +10,16 @@
 
 
 (defun is-graph (graph-id)
-    (gethash graph-id *graphs*))
+    (gethash graph-id *graphs*)) ;; se esiste ritorna il grafo, altrimenti nil
 
 (defun new-graph (graph-id)
     (or (gethash graph-id *graphs*)
-        (setf (gethash graph-id *graphs*) graph-id))))
+        (setf (gethash graph-id *graphs*) graph-id)))
 
 (defun delete-graph (graph-id)
-    (remhash graph-id *graphs*)
+    (remhash graph-id *graphs*))
     ;; manca un pezzo
-)
 
 (defun new-vertex (graph-id vertex-id)
-    (setf (gethash (list ’vertex graph-id vertex-id) *vertices*))
-          (list ’vertex graph-id vertex-id)))
-
-(defun graph-vertices (graph-id)
-  (let ((result '()))
-    (maphash (lambda (key value)
-               (when (and (eq (first key) 'vertex)
-                          (eq (second key) graph-id))
-                 (push (third key) result)))
-             *vertices*)
-    result))
-
-(defun new-edge (graph-id vertex-id vertex-id2 &optional weight)
-    (setf (gethash (list ’edge graph-id vertex-id vertex-id2)
-    *edges*)
-    (if weight
-        (list ’edge graph-id vertex-id vertex-id2 weight)
-        (list ’edge graph-id vertex-id vertex-id2))))
-
-(defun graph-edges (graph-id) 
-    (let ((result '()))
-    (maphash (lambda (key value)
-               (when (and (eq (first key) 'edge)
-                          (eq (second key) graph-id))
-                 (push (list (third key) (fourth key)) result)))
-             *edges*)
-    result))
-
-(defun graph-vertex-neighbors (graph-id vertex-id)
-    ())
+    (setf (gethash (list 'vertex graph-id vertex-id) *vertices*) nil)
+    (list 'vertex graph-id vertex-id))
