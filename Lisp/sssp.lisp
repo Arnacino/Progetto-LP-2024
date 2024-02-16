@@ -198,6 +198,7 @@
             (heapify-up heap-id parent)))))
 
 (defun heap-insert (heap-id key value)
+    ;; controllare se non esiste già un value uguale
     (if (not (gethash heap-id *heaps*))
         (return-from heap-insert nil))
     (if (= (heap-size heap-id) (heap-length heap-id))
@@ -253,6 +254,24 @@
         (heapify-down heap-id 0)
         (list k v)))
 
+(defun modify-key (heap-id new-key old-key v)
+    (if (not (gethash heap-id *heaps*))
+        (return-from modify-key nil))
+    (if (heap-empty heap-id)
+        (return-from modify-key nil))
+    (if (not (numberp new-key))
+        (return-from modify-key nil))
+    (if (not (numberp old-key))
+        (return-from modify-key nil))
+    (if (not (position (list old-key v) (heap-actual-heap heap-id) :test #'equal))
+        (return-from modify-key nil))
+    (let ((i (position 
+                (list old-key v) 
+                (heap-actual-heap heap-id) :test #'equal)))
+         (if (< new-key old-key)
+             (heapify-up heap-id i)
+             (heapify-down heap-id i))))
+             
 (defun heap-print (heap-id) 
     (if (not (gethash heap-id *heaps*))
         (return-from heap-print nil))
