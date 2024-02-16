@@ -7,6 +7,7 @@
 (defparameter *visited* (make-hash-table :test #'equal))
 (defparameter *distances* (make-hash-table :test #'equal))
 (defparameter *previous* (make-hash-table :test #'equal))
+(defparameter *heaps* (make-hash-table :test #'equal))
 
 ; --------------------- Creazione e manipolazione grafi ---------------------- ;
 
@@ -71,3 +72,16 @@
 (defun graph-print (graph-id)
     (format t "Vertices: ~a~%" (graph-vertices graph-id))
     (format t "Edges: ~a~%" (graph-edges graph-id)))
+    ; --------------------- heap ---------------------- ;
+    
+    
+    (defun new-heap (heap-id &optional (capacity 42))
+       (or (gethash heap-id *heaps*)
+       (setf (gethash heap-id *heaps*)
+       (list ’heap heap-id 0 (make-array capacity)))))
+
+
+(defun heap-delete(heap-id)
+    (clrhash heap-id *heaps*))
+
+heap-empty    
