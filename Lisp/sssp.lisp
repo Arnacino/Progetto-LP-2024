@@ -133,15 +133,22 @@
         (error "Heap not found"))
     (third (gethash heap-id *heaps*)))
 
-(defun set-heap-size (heap-id new-size)
-  (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
-  (setf (third (gethash heap-id *heaps*)) new-size))
-
 (defun heap-actual-heap (heap-id)
     (if (not (gethash heap-id *heaps*))
         (error "Heap not found"))
     (fourth (gethash heap-id *heaps*)))
+
+(defun heap-length (heap-id)
+    (if (not (gethash heap-id *heaps*))
+        (error "Heap not found"))
+    (length (heap-actual-heap heap-id)))
+
+(defun set-heap-size (heap-id new-size)
+  (if (not (gethash heap-id *heaps*))
+      (error "Heap not found"))
+  (if (> new-size (heap-length heap-id))
+      (error "New size is greater than heap capacity"))
+  (setf (third (gethash heap-id *heaps*)) new-size))
 
 (defun heap-array-key (heap-id i)
     (if (not (gethash heap-id *heaps*))
@@ -152,11 +159,6 @@
     (if (not (gethash heap-id *heaps*))
         (error "Heap not found"))
     (second (aref (fourth (gethash heap-id *heaps*)) i)))
-
-(defun heap-length (heap-id)
-    (if (not (gethash heap-id *heaps*))
-        (error "Heap not found"))
-    (length (heap-actual-heap heap-id)))
 
 (defun heap-empty (heap-id)
     (if (not (gethash heap-id *heaps*))
@@ -184,10 +186,10 @@
 (defun heapify-up (heap-id i)
     (format t "i: ~a~%" i)
     (when (/= i 0)
-        (let ((parent (floor (/ i 2)))
+        (let ((parent (floor (/ (- i 1) 2)))
               (aux '()))
         (format t "parent: ~a~%" parent)
-        (format t "figlio: ~a~%" i)      
+        (format t "child: ~a~%" i)      
         (when (< (heap-array-key heap-id i) 
                  (heap-array-key heap-id parent))
             (setf aux (aref (heap-actual-heap heap-id) i))
@@ -203,8 +205,9 @@
         (return-from heap-insert nil))
     (if (not (numberp key))
         (return-from heap-insert nil))
-    (let ((i (heap-bottom 0 heap-id key value)))
-        (setf i (- (heap-size heap-id) 1))
+    (let ((i (heap-size heap-id)))
+        (set-heap-size heap-id (+ (heap-size heap-id) 1))
+        (setf (aref (heap-actual-heap heap-id) i) (list key value))
         (heapify-up heap-id i))
     (return-from heap-insert t))
 
@@ -213,20 +216,15 @@
   (new-heap 'heap1)
 
   ;; Insert some elements
-  (heap-insert 'heap1 1231 'a)
-  (heap-insert 'heap1 323 'b)
-  (heap-insert 'heap1 44 'c)
   (heap-insert 'heap1 2131 'd)
   (heap-insert 'heap1 12 'e)
   (heap-insert 'heap1 3 'f)
+  (heap-insert 'heap1 1231 'a)
+  (heap-insert 'heap1 323 'b)
+  (heap-insert 'heap1 44 'c)
   (heap-insert 'heap1 300 'g)
   (heap-insert 'heap1 40 'h)
   (heap-insert 'heap1 1200 'i)
 
-  ;; Check if each element is in the correct position
-(loop for i from 0 to (- (heap-size 'heap1) 1) do
-    (let ((parent-key (if (> i 0) (heap-array-key 'heap1 (floor (/ i 2))) nil))
-          (child-key (heap-array-key 'heap1 i)))
-      (if (and parent-key (< child-key parent-key))
-          (format t "Element ~a is not in the correct position!~%" i)
-          (format t "Element ~a is in the correct position.~%" i)))))
+  (heap-actual-heap 'heap1))
+
