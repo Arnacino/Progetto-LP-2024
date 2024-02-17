@@ -189,6 +189,13 @@
               (aref (heap-actual-heap heap-id) j))
         (setf (aref (heap-actual-heap heap-id) j) aux)))
 
+(defun check-duplicate-value (arr value)
+  (let ((lst (coerce arr 'list)))
+    (when lst
+      (if (equal (second (car lst)) value)
+          value
+          (check-duplicate-value (cdr lst) value)))))
+
 (defun heapify-up (heap-id i)
     (when (/= i 0)
         (let ((parent (floor (/ (- i 1) 2))))   
@@ -198,7 +205,8 @@
             (heapify-up heap-id parent)))))
 
 (defun heap-insert (heap-id key value)
-    ;; controllare se non esiste già un value uguale
+    (if (not (null (check-duplicate-value (heap-actual-heap heap-id) value)))
+        (return-from heap-insert nil))
     (if (not (gethash heap-id *heaps*))
         (return-from heap-insert nil))
     (if (= (heap-size heap-id) (heap-length heap-id))
@@ -263,14 +271,17 @@
         (return-from modify-key nil))
     (if (not (numberp old-key))
         (return-from modify-key nil))
-    (if (not (position (list old-key v) (heap-actual-heap heap-id) :test #'equal))
-        (return-from modify-key nil))
     (let ((i (position 
                 (list old-key v) 
                 (heap-actual-heap heap-id) :test #'equal)))
+         (print i)
+         (if (null i)
+             (return-from modify-key nil)
+             (setf (aref (heap-actual-heap heap-id) i) (list new-key v)))
          (if (< new-key old-key)
              (heapify-up heap-id i)
-             (heapify-down heap-id i))))
+             (heapify-down heap-id i))
+         (return-from modify-key t)))
              
 (defun heap-print (heap-id) 
     (if (not (gethash heap-id *heaps*))
@@ -295,3 +306,20 @@
 
   (heap-actual-heap 'heap1))
 
+(defun test2 ()
+  ;; Create a new heap
+  (new-heap 'h1)
+
+  ;; Insert some elements
+  (heap-insert 'h1 66 'a)
+  (heap-insert 'h1 92 'b)
+  (heap-insert 'h1 2 'c)
+  (heap-insert 'h1 40 'd)
+  (heap-insert 'h1 100 'e)
+  (heap-insert 'h1 12 'f)
+  (heap-insert 'h1 82 'g)
+  (heap-insert 'h1 73 'h)
+  (heap-insert 'h1 97 'i)
+  (heap-insert 'h1 23 'j)
+
+  (heap-actual-heap 'h1))
