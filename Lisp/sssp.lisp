@@ -289,6 +289,7 @@
       (return-from heap-print nil))
   (format t "Heap: ~a~%" (heap-actual-heap heap-id))
   (values))
+  
 
 ; --------------------------- Algoritmo di Dijkstra ------------------------- ;
 
@@ -392,13 +393,13 @@
     (sssp-set-visited graph-id source)
     (dijkstra graph-id heap-id)))
 
-(defun build-path (graph-id current-v previous-v path)
+(defun build-path (graph-id current-v previous-v path &optional start)
   (is-vertex graph-id current-v)
   (is-vertex graph-id previous-v)
   (if (equal current-v previous-v)
       path
     (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
-      (when edge
+      (when (and edge (not start))
         (push edge path))
       (build-path graph-id previous-v (sssp-previous graph-id previous-v) path))))
 
@@ -407,75 +408,4 @@
   (is-vertex graph-id vertex-id)
   (sssp-dijkstra graph-id source)
   (let ((path '()))
-    (build-path graph-id source vertex-id path)))
-
-
-; ---------------------------------- TESTS ---------------------------------- ;
-
-(defun print-hash-table (hash-table)
-    (maphash (lambda (k v)
-               (format t "~a -> ~a~%" k v))
-             hash-table))
-    
-(defun test1 ()
-    (new-graph 'g1)
-    (new-vertex 'g1 's)
-    (new-vertex 'g1 'a)
-    (new-vertex 'g1 'b)
-    (new-vertex 'g1 'c)
-    (new-vertex 'g1 'd)
-    (new-vertex 'g1 'e)
-    (new-vertex 'g1 'f)
-
-    (new-edge 'g1 's 'a 2.5)
-    (new-edge 'g1 's 'd 8)
-    (new-edge 'g1 'd 'e 3)
-    (new-edge 'g1 'd 'c 2)
-    (new-edge 'g1 'a 'c 2)
-    (new-edge 'g1 'a 'b 6)
-    (new-edge 'g1 'b 'f 5)
-    (new-edge 'g1 'e 'f 1)
-    (new-edge 'g1 'c 'e 9)
-    
-    (print-hash-table *vertices*)
-    (print-hash-table *edges*)
-    (print-hash-table *graphs*)
-    (print-hash-table *visited*)
-    (print-hash-table *distances*)
-    (print-hash-table *previous*)
-    (print-hash-table *heaps*))
-
-(defun run-tests ()
-  ;; Create a new heap
-  (new-heap 'heap1)
-
-  ;; Insert some elements
-  (heap-insert 'heap1 2131 'd)
-  (heap-insert 'heap1 12 'e)
-  (heap-insert 'heap1 3 'f)
-  (heap-insert 'heap1 1231 'a)
-  (heap-insert 'heap1 323 'b)
-  (heap-insert 'heap1 44 'c)
-  (heap-insert 'heap1 300 'g)
-  (heap-insert 'heap1 40 'h)
-  (heap-insert 'heap1 1200 'i)
-
-  (heap-actual-heap 'heap1))
-
-(defun test2 ()
-  ;; Create a new heap
-  (new-heap 'h1)
-
-  ;; Insert some elements
-  (heap-insert 'h1 66 'a)
-  (heap-insert 'h1 92 'b)
-  (heap-insert 'h1 2 'c)
-  (heap-insert 'h1 40 'd)
-  (heap-insert 'h1 100 'e)
-  (heap-insert 'h1 12 'f)
-  (heap-insert 'h1 82 'g)
-  (heap-insert 'h1 73 'h)
-  (heap-insert 'h1 97 'i)
-  (heap-insert 'h1 23 'j)
-
-  (heap-actual-heap 'h1))
+    (build-path graph-id source vertex-id path T)))

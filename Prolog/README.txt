@@ -5,46 +5,46 @@ Progetto scritto da:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ Manipolazione di grafi ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-new_graph(G).
+new_graph(G)
 
     Crea un nuovo grafo se non esiste già un grafo con il medesimo nome
 
 
-delete_graph(G).
+delete_graph(G)
 
     Cancella un grafo dalla base di dati, eliminando anche tutti 
     i suoi relativi vertici ed archi 
 
 
-new_vertex(G, V).
+new_vertex(G, V)
 
     Controlla se il grafo preso in input esiste, in caso positivo controlla 
     che non esista già il vertice e lo inserisce nella base dati 
 
 
-vertices(G, Vs).
+vertices(G, Vs)
 
     Ritorna true se tutti i vertici nella lista Vs appartengono al grafo G
 
 
-list_vertices(G).
+list_vertices(G)
 
     stampa tutti i vertici del grafo G
 
 
-new_edge(G, U, V).
+new_edge(G, U, V)
 
     crea un arco (dato che il peso non è specificato lo inserisce con peso 1) 
     se non esiste già nella base dati
 
 
-new_edge(G, U, V, Weight).
+new_edge(G, U, V, Weight)
 
     crea un arco con peso Weight 
     (se non esiste già nella base dati un arco che va da U a V qualunque sia il suo peso)
 
 
-edges(G, Es).
+edges(G, Es)
 
     ritorna true se tutti gli archi nella lista Es appartengono al grafo g
 
