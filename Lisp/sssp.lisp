@@ -77,11 +77,11 @@
         (error "Vertex not found"))
     (if (and (not (null weight)) (numberp weight) (> weight 0))
         (setf 
-         (gethash (list 'edge graph-id vertex-id vertex-id2 weight) *edges*) 
+         (gethash (list 'edge graph-id vertex-id vertex-id2) *edges*) 
          (list 'edge graph-id vertex-id vertex-id2 weight))
         (setf 
-         (gethash (list 'edge graph-id vertex-id vertex-id2 1) 
-          *edges*) 
+         (gethash (list 'edge graph-id vertex-id vertex-id2) 
+          *edges*)
          (list 'edge graph-id vertex-id vertex-id2 1))))
 
 (defun graph-edges (graph-id)
@@ -96,6 +96,13 @@
              *edges*)
      vertex-rep-list))
 
+(defun get-weight (graph-id vertex-id vertex-id2)
+    (if (not (and
+              (is-vertex graph-id vertex-id) 
+              (is-vertex graph-id vertex-id2)))
+        (error "Vertex not found"))
+    (fifth (gethash (list 'edge graph-id vertex-id vertex-id2) *edges*)))
+
 (defun graph-vertex-neighbors (graph-id vertex-id) 
     (let ((neighbors '()))
         (maphash (lambda (k v)
@@ -104,7 +111,7 @@
                          (eq (first k) 'edge)
                          (eq (second k) graph-id)
                          (eq (third k) vertex-id))
-                        (push (list k v) neighbors))) *edges*)neighbors))
+                        (push v neighbors))) *edges*)neighbors))
 
 (defun graph-print (graph-id)
   (format t "Vertices: ~a~%" (graph-vertices graph-id))
@@ -127,6 +134,11 @@
 
 (defun heap-delete (heap-id)
     (remhash heap-id *heaps*))
+
+(defun heap-id (heap-id) 
+    (if (not (gethash heap-id *heaps*))
+        (error "Heap not found"))
+    (second (gethash heap-id *heaps*)))
 
 (defun heap-size (heap-id) 
     (if (not (gethash heap-id *heaps*))
@@ -172,16 +184,6 @@
     (if (heap-not-empty heap-id)
         (aref (fourth (gethash heap-id *heaps*)) 0)
         (error "Heap is empty")))
-
-(defun heap-bottom (i heap-id key value) 
-    (if (null (aref (heap-actual-heap heap-id) i))
-        (progn
-            (setf (aref (heap-actual-heap heap-id) i) (list key value))
-            (set-heap-size heap-id (+ (heap-size heap-id) 1)))
-        (progn
-            (incf i)
-            (when (< i (heap-length heap-id))
-                (heap-bottom i heap-id key value)))))
 
 (defun swap (heap-id i j)
     (let ((aux (aref (heap-actual-heap heap-id) i)))
@@ -274,7 +276,6 @@
     (let ((i (position 
                 (list old-key v) 
                 (heap-actual-heap heap-id) :test #'equal)))
-         (print i)
          (if (null i)
              (return-from modify-key nil)
              (setf (aref (heap-actual-heap heap-id) i) (list new-key v)))
@@ -288,6 +289,162 @@
         (return-from heap-print nil))
     (format t "Heap: ~a~%" (heap-actual-heap heap-id))
     (values))
+
+
+; --------------------------- Algoritmo di Dijkstra ------------------------- ;
+
+
+(defun sssp-dist (graph-id vertex-id)
+    (is-vertex graph-id vertex-id)
+    (values (gethash (list graph-id vertex-id) *distances*)))
+
+(defun sssp-previous (graph-id vertex-id)
+    (is-vertex graph-id vertex-id)
+    (values (gethash (list graph-id vertex-id) *previous*)))
+
+(defun sssp-visited (graph-id vertex-id)
+    (is-vertex graph-id vertex-id)
+    (let ((visited (gethash (list graph-id vertex-id) *visited*)))
+        (if visited T NIL)))
+
+(defun sssp-change-dist (graph-id vertex-id new-dist) 
+    (is-vertex graph-id vertex-id)
+    (setf (gethash (list graph-id vertex-id) *distances*) new-dist))
+
+(defun sssp-change-previous (graph-id vertex-id new-previous) 
+    (is-vertex graph-id vertex-id)
+    (setf (gethash (list graph-id vertex-id) *previous*) new-previous))
+
+(defun sssp-set-visited (graph-id vertex-id) 
+    (is-vertex graph-id vertex-id)
+    (setf (gethash (list graph-id vertex-id) *visited*) t))
+
+(defun sssp-set-not-visited (graph-id vertex-id) 
+    (is-vertex graph-id vertex-id)
+    (setf (gethash (list graph-id vertex-id) *visited*) nil))
+
+(defun sssp-is-visited (graph-id vertex-id) 
+    (is-vertex graph-id vertex-id)
+    (gethash (list graph-id vertex-id) *visited*))
+
+(defun sssp-reset (graph-id &optional vertices)
+    (if vertices
+        (progn
+            (sssp-reset graph-id (cdr vertices))
+            (sssp-change-dist graph-id (third (car vertices)) nil)
+            (sssp-set-not-visited graph-id (third (car vertices))))
+        (progn
+            (maphash (lambda (k v)
+                       (declare (ignore v))
+                       (when (and (listp k) (eq (second k) graph-id))
+                         (sssp-change-dist graph-id (third k) nil)
+                         (sssp-set-not-visited graph-id (third k))))
+                     *vertices*))))
+
+(defun sssp-init-distance (graph-id vertices source)
+    (mapc (lambda (vertex)
+              (let ((v (third vertex)))
+                (if (equal v source)
+                    (progn
+                      (sssp-change-dist graph-id source 0)
+                      (heap-insert graph-id 0 source))
+                    (progn
+                      (sssp-change-dist graph-id v 1000000)
+                      (heap-insert graph-id 1000000 v)))))
+            vertices))
+
+(defun process-neighbors (graph-id vertex-id neighbors)
+    (is-vertex graph-id vertex-id)
+    (mapc #'(lambda (pair)
+              (let* ((k (fifth pair))
+                     (vDest (fourth pair))
+                     (newD (+  
+                            (gethash (list graph-id vertex-id) *distances*) 
+                            (get-weight graph-id vertex-id vDest)))
+                     (oldD (gethash (list graph-id vDest) *distances*)))
+                (declare (ignore k))
+                (when (< newD oldD)
+                    (sssp-change-dist graph-id vDest newD)
+                    (sssp-change-previous graph-id vDest vertex-id)
+                    (modify-key graph-id newD oldD vDest))))
+         neighbors))
+
+(defun dijkstra (graph-id heap-id)
+    (if (heap-empty heap-id)
+        (return-from dijkstra nil))
+    (let* 
+        ((vertex (second (heap-head heap-id)))
+         (neighbors (graph-vertex-neighbors graph-id vertex)))
+        (process-neighbors graph-id vertex neighbors)
+        (sssp-set-visited graph-id vertex)
+        (heap-extract heap-id)
+        (dijkstra graph-id heap-id)))
+
+(defun sssp-dijkstra (graph-id source)
+    (is-vertex graph-id source)
+    (sssp-reset graph-id)
+    (new-heap graph-id)
+    (let ((heap-id (heap-id graph-id))
+          (vertices (graph-vertices graph-id))
+          (neighbors (graph-vertex-neighbors graph-id source)))
+        (sssp-init-distance graph-id vertices source)
+        (process-neighbors graph-id source neighbors)
+        (heap-extract heap-id)
+        (sssp-set-visited graph-id source)
+        (dijkstra graph-id heap-id)))
+
+(defun build-path (graph-id current-v previous-v path)
+    (is-vertex graph-id current-v)
+    (is-vertex graph-id previous-v)
+    (if (equal current-v previous-v)
+        path
+        (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
+            (when edge
+                (push edge path))
+            (build-path graph-id previous-v (sssp-previous graph-id previous-v) path))))
+
+(defun shortest-path (graph-id source vertex-id)
+    (is-vertex graph-id source)
+    (is-vertex graph-id vertex-id)
+    (sssp-dijkstra graph-id source)
+    (let ((path '()))
+        (build-path graph-id source vertex-id path)))
+
+
+; ---------------------------------- TESTS ---------------------------------- ;
+
+(defun print-hash-table (hash-table)
+    (maphash (lambda (k v)
+               (format t "~a -> ~a~%" k v))
+             hash-table))
+    
+(defun test1 ()
+    (new-graph 'g1)
+    (new-vertex 'g1 's)
+    (new-vertex 'g1 'a)
+    (new-vertex 'g1 'b)
+    (new-vertex 'g1 'c)
+    (new-vertex 'g1 'd)
+    (new-vertex 'g1 'e)
+    (new-vertex 'g1 'f)
+
+    (new-edge 'g1 's 'a 2)
+    (new-edge 'g1 's 'd 8)
+    (new-edge 'g1 'd 'e 3)
+    (new-edge 'g1 'd 'c 2)
+    (new-edge 'g1 'a 'c 2)
+    (new-edge 'g1 'a 'b 6)
+    (new-edge 'g1 'b 'f 5)
+    (new-edge 'g1 'e 'f 1)
+    (new-edge 'g1 'c 'e 9)
+    
+    (print-hash-table *vertices*)
+    (print-hash-table *edges*)
+    (print-hash-table *graphs*)
+    (print-hash-table *visited*)
+    (print-hash-table *distances*)
+    (print-hash-table *previous*)
+    (print-hash-table *heaps*))
 
 (defun run-tests ()
   ;; Create a new heap
