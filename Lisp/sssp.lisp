@@ -137,22 +137,22 @@
 
 (defun heap-id (heap-id) 
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+      (return-from heap-id nil))
   (second (gethash heap-id *heaps*)))
 
 (defun heap-size (heap-id) 
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+    (return-from heap-size nil))
   (third (gethash heap-id *heaps*)))
 
 (defun heap-actual-heap (heap-id)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+    (return-from heap-actual-heap nil))
   (fourth (gethash heap-id *heaps*)))
 
 (defun heap-length (heap-id)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+    (return-from heap-length nil))
   (length (heap-actual-heap heap-id)))
 
 (defun set-heap-size (heap-id new-size)
@@ -226,8 +226,8 @@
     (let ((leftc (+ (* i 2) 1))
           (rightc (+ (* i 2) 2)))
       (cond ((and 
-              (not (null (aref (heap-actual-heap heap-id) leftc)))
-              (not (null (aref (heap-actual-heap heap-id) rightc))))
+              (< leftc (heap-size heap-id))
+              (< rightc (heap-size heap-id)))
              (let ((smaller-child (if (<= (heap-array-key heap-id leftc) 
                                           (heap-array-key heap-id rightc))
                                       leftc
@@ -236,24 +236,26 @@
                         (heap-array-key heap-id smaller-child))
                  (swap heap-id i smaller-child)
                  (heapify-down heap-id smaller-child))))
-            ((not (null (aref (heap-actual-heap heap-id) leftc)))
-             (when (> (heap-array-key heap-id i) 
-                      (heap-array-key heap-id leftc))
-               (swap heap-id i leftc)
-               (heapify-down heap-id leftc)))
-            ((not (null (aref (heap-actual-heap heap-id) rightc)))
-             (when (> (heap-array-key heap-id i) 
-                      (heap-array-key heap-id rightc))
-               (swap heap-id i rightc)
-               (heapify-down heap-id rightc)))))))
+            ((and (< leftc (heap-size heap-id))
+                  (> (heap-array-key heap-id i) 
+                     (heap-array-key heap-id leftc)))
+             (swap heap-id i leftc)
+             (heapify-down heap-id leftc))
+            ((and (< rightc (heap-size heap-id))
+                  (> (heap-array-key heap-id i) 
+                     (heap-array-key heap-id rightc)))
+             (swap heap-id i rightc)
+             (heapify-down heap-id rightc))))))
 
 (defun heap-extract (heap-id) 
   (if (not (gethash heap-id *heaps*))
-      (return-from heap-extract nil))
-  (if (= (heap-size heap-id) (heap-length heap-id))
-      (return-from heap-extract nil))
+      (progn
+        (print "Heap not found")
+        (return-from heap-extract nil)))
   (if (heap-empty heap-id)
-      (return-from heap-extract nil))
+      (progn
+        (print "Heap is empty")
+        (return-from heap-extract nil)))
   (set-heap-size heap-id (- (heap-size heap-id) 1))
   (let ((k (heap-array-key heap-id 0))
         (v (heap-array-value heap-id 0)))
@@ -289,7 +291,7 @@
       (return-from heap-print nil))
   (format t "Heap: ~a~%" (heap-actual-heap heap-id))
   (values))
-  
+
 
 ; --------------------------- Algoritmo di Dijkstra ------------------------- ;
 
@@ -383,7 +385,9 @@
 (defun sssp-dijkstra (graph-id source)
   (is-vertex graph-id source)
   (sssp-reset graph-id)
-  (new-heap graph-id)
+  (if (heap-id graph-id)
+    (heap-delete (heap-id graph-id)))
+  (new-heap graph-id (length (graph-vertices graph-id)))
   (let ((heap-id (heap-id graph-id))
         (vertices (graph-vertices graph-id))
         (neighbors (graph-vertex-neighbors graph-id source)))
@@ -409,3 +413,111 @@
   (sssp-dijkstra graph-id source)
   (let ((path '()))
     (build-path graph-id source vertex-id path T)))
+
+
+; ---------------------------------- TESTS ---------------------------------- ;
+
+(defun print-hash-table (hash-table)
+    (maphash (lambda (k v)
+               (format t "~a -> ~a~%" k v))
+             hash-table))
+    
+(defun test1 (graph)
+    (new-graph graph)
+    (new-vertex graph 's)
+    (new-vertex graph 'a)
+    (new-vertex graph 'b)
+    (new-vertex graph 'c)
+    (new-vertex graph 'd)
+    (new-vertex graph 'e)
+    (new-vertex graph 'f)
+
+    (new-edge graph 's 'a 2.5)
+    (new-edge graph 's 'd 8)
+    (new-edge graph 'd 'e 3)
+    (new-edge graph 'd 'c 2)
+    (new-edge graph 'a 'c 2)
+    (new-edge graph 'a 'b 6)
+    (new-edge graph 'b 'f 5)
+    (new-edge graph 'e 'f 1)
+    (new-edge graph 'c 'e 9)
+    
+    (print-hash-table *vertices*)
+    (print-hash-table *edges*)
+    (print-hash-table *graphs*)
+    (print-hash-table *visited*)
+    (print-hash-table *distances*)
+    (print-hash-table *previous*)
+    (print-hash-table *heaps*))
+
+    
+(defun test3 (graph)
+    (new-graph graph)
+    (new-vertex graph 0)
+    (new-vertex graph 1)
+    (new-vertex graph 2)
+    (new-vertex graph 3)
+    (new-vertex graph 4)
+    (new-vertex graph 5)
+    (new-vertex graph 6)
+    (new-vertex graph 7)
+
+    (new-edge graph 4 5 0.35)
+    (new-edge graph 5 4 0.35)
+    (new-edge graph 4 7 0.37)
+    (new-edge graph 5 7 0.28)
+    (new-edge graph 7 5 0.28)
+    (new-edge graph 5 1 0.32)
+    (new-edge graph 0 4 0.38)
+    (new-edge graph 0 2 0.26)
+    (new-edge graph 7 3 0.39)
+    (new-edge graph 1 3 0.29)
+    (new-edge graph 2 7 0.34)
+    (new-edge graph 6 2 0.40)
+    (new-edge graph 3 6 0.52)
+    (new-edge graph 6 0 0.58)
+    (new-edge graph 6 4 0.93)
+    
+
+    (print-hash-table *vertices*)
+    (print-hash-table *edges*)
+    (print-hash-table *graphs*)
+    (print-hash-table *visited*)
+    (print-hash-table *distances*)
+    (print-hash-table *previous*)
+    (print-hash-table *heaps*))
+
+(defun run-tests ()
+  ;; Create a new heap
+  (new-heap 'heap1)
+
+  ;; Insert some elements
+  (heap-insert 'heap1 2131 'd)
+  (heap-insert 'heap1 12 'e)
+  (heap-insert 'heap1 3 'f)
+  (heap-insert 'heap1 1231 'a)
+  (heap-insert 'heap1 323 'b)
+  (heap-insert 'heap1 44 'c)
+  (heap-insert 'heap1 300 'g)
+  (heap-insert 'heap1 40 'h)
+  (heap-insert 'heap1 1200 'i)
+
+  (heap-actual-heap 'heap1))
+
+(defun test2 ()
+  ;; Create a new heap
+  (new-heap 'h1)
+
+  ;; Insert some elements
+  (heap-insert 'h1 66 'a)
+  (heap-insert 'h1 92 'b)
+  (heap-insert 'h1 2 'c)
+  (heap-insert 'h1 40 'd)
+  (heap-insert 'h1 100 'e)
+  (heap-insert 'h1 12 'f)
+  (heap-insert 'h1 82 'g)
+  (heap-insert 'h1 73 'h)
+  (heap-insert 'h1 97 'i)
+  (heap-insert 'h1 23 'j)
+
+  (heap-actual-heap 'h1))
