@@ -62,13 +62,13 @@
        (not (null (gethash (list 'vertex graph-id vertex-id) *vertices*))))) 
 
 (defun graph-vertices (graph-id)
-  (let ((vertex-rep-list '()))
+  (let ((vertex-list '()))
     (maphash (lambda (k v)
                (declare (ignore v))
                (when (and (listp k) (eq (first k) 'vertex) (eq (second k) graph-id))
-                 (push k vertex-rep-list)))
+                 (push k vertex-list)))
              *vertices*)
-    vertex-rep-list))
+    vertex-list))
 
 (defun new-edge (graph-id vertex-id vertex-id2 &optional weight)
   (if (not (and
@@ -85,16 +85,16 @@
        (list 'edge graph-id vertex-id vertex-id2 1))))
 
 (defun graph-edges (graph-id)
-  (let ((vertex-rep-list '()))
+  (let ((vertex-list '()))
     (maphash (lambda (k v)
                (declare (ignore v))
                (when (and 
                       (listp k) 
                       (eq (first k) 'edge) 
                       (eq (second k) graph-id))
-                 (push k vertex-rep-list)))
+                 (push k vertex-list)))
              *edges*)
-    vertex-rep-list))
+    vertex-list))
 
 (defun get-weight (graph-id vertex-id vertex-id2)
   (if (not (and
@@ -120,7 +120,7 @@
   (values))
 
 
-; -------------------------- Algoritmo di MinHeap ---------------------------- ;
+; ------------------------ Implementazione MinHeap -------------------------- ;
 
 
 (defun new-heap (heap-id &optional capacity)
@@ -158,24 +158,24 @@
 
 (defun set-heap-size (heap-id new-size)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+      (return-from set-heap-size nil))
   (if (> new-size (heap-length heap-id))
       (error "New size is greater than heap capacity"))
   (setf (third (gethash heap-id *heaps*)) new-size))
 
 (defun heap-array-key (heap-id i)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
-  (first (aref (fourth (gethash heap-id *heaps*)) i)))
+      (return-from heap-array-key nil))
+  (first (aref (heap-actual-heap heap-id) i)))
 
 (defun heap-array-value (heap-id i)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
-  (second (aref (fourth (gethash heap-id *heaps*)) i)))
+      (return-from heap-array-value nil))
+  (second (aref (heap-actual-heap heap-id) i)))
 
 (defun heap-empty (heap-id)
   (if (not (gethash heap-id *heaps*))
-      (error "Heap not found"))
+      (return-from heap-empty nil))
   (= (third (gethash heap-id *heaps*)) 0))    
 
 (defun heap-not-empty (heap-id)
@@ -183,7 +183,7 @@
 
 (defun heap-head (heap-id)
   (if (heap-not-empty heap-id)
-      (aref (fourth (gethash heap-id *heaps*)) 0)
+      (aref (heap-actual-heap heap-id) 0)
       (error "Heap is empty")))
 
 (defun swap (heap-id i j)
@@ -208,9 +208,9 @@
         (heapify-up heap-id parent)))))
 
 (defun heap-insert (heap-id key value)
-  (if (not (null (check-duplicate-value (heap-actual-heap heap-id) value)))
-      (return-from heap-insert nil))
   (if (not (gethash heap-id *heaps*))
+      (return-from heap-insert nil))
+  (if (not (null (check-duplicate-value (heap-actual-heap heap-id) value)))
       (return-from heap-insert nil))
   (if (= (heap-size heap-id) (heap-length heap-id))
       (return-from heap-insert nil))
