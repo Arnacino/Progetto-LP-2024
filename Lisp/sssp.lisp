@@ -330,19 +330,14 @@
   (is-vertex graph-id vertex-id)
   (gethash (list graph-id vertex-id) *visited*))
 
-(defun sssp-reset (graph-id &optional vertices)
-  (if vertices
-      (progn
-        (sssp-reset graph-id (cdr vertices))
-        (sssp-change-dist graph-id (third (car vertices)) nil)
-        (sssp-set-not-visited graph-id (third (car vertices))))
+(defun sssp-reset (graph-id)
     (progn
       (maphash (lambda (k v)
                  (declare (ignore v))
                  (when (and (listp k) (eq (second k) graph-id))
                    (sssp-change-dist graph-id (third k) nil)
                    (sssp-set-not-visited graph-id (third k))))
-               *vertices*))))
+               *vertices*)))
 
 (defun sssp-init-distance (graph-id vertices source)
   (mapc (lambda (vertex)
@@ -408,9 +403,9 @@
         (push edge path))
       (build-path graph-id previous-v (sssp-previous graph-id previous-v) path))))
 
-(defun shortest-path (graph-id source vertex-id)
+(defun shortest-path (graph-id source dest)
   (is-vertex graph-id source)
-  (is-vertex graph-id vertex-id)
+  (is-vertex graph-id dest)
   (sssp-dijkstra graph-id source)
   (let ((path '()))
-    (build-path graph-id source vertex-id path T)))
+    (build-path graph-id source dest path T)))

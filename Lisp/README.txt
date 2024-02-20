@@ -467,3 +467,225 @@ Progetto scritto da:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Algoritmo di Dijkstra ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+(sssp-dist graph-id vertex-id)
+
+    Questa funzione restituisce la distanza minima da un vertice di origine a 
+    un vertice specifico in un grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id
+    e l'ID del vertice vertex-id.
+    La funzione verifica prima se il vertice esiste nel grafo utilizzando la 
+    funzione is-vertex.
+    Se il vertice non esiste, la funzione ritorna immediatamente nil.
+    Se il vertice esiste, la funzione restituisce la distanza minima dal 
+    vertice di origine al vertice specificato. 
+    La distanza minima viene ottenuta utilizzando la funzione gethash 
+    con una lista contenente l'ID del grafo e l'ID del vertice come chiave. 
+    La tabella hash *distances* contiene le distanze minime per ogni vertice.
+    Ritorna la distanza minima se il vertice esiste, altrimenti ritorna nil.
+
+
+(sssp-previous graph-id vertex-id)
+
+    Stessa cosa di sssp-dist ma come value la HashTable contiene il precedente.
+
+
+(sssp-visited graph-id vertex-id)
+
+    Stessa cosa di sssp-dist e sssp-previous ma come value la HashTable contiene
+    T se il vertice è stato visitato o NIL se non è stato visitato.
+
+
+(sssp-change-dist graph-id vertex-id new-dist)
+
+    Questa funzione modifica la distanza minima da un vertice di origine a un 
+    vertice specifico in un grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id, l'ID del vertice vertex-id 
+    e la nuova distanza new-dist.
+    La funzione verifica prima se il vertice esiste nel grafo utilizzando la
+    funzione is-vertex.
+    Se il vertice non esiste, la funzione ritorna immediatamente nil.
+    Se il vertice esiste, la funzione modifica la distanza minima dal vertice 
+    di origine al vertice specificato utilizzando la funzione setf.
+    La distanza minima viene modificata nella HashTable *distances* che 
+    contiene le distanze minime per ogni vertice.
+    Ritorna nil dopo aver modificato la distanza minima.
+
+
+(sspp-change-previous graph-id vertex-id new-previous)
+
+    Uguale a sssp-change-dist ma cambia il previous all'interno della HashTable 
+    *previous*
+
+
+(sssp-set-visited graph-id vertex-id)
+
+    Questa funzione segna un vertice specifico come visitato in un grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id
+    e l'ID del vertice vertex-id.
+    La funzione verifica prima se il vertice esiste nel grafo utilizzando la 
+    funzione is-vertex.
+    Se il vertice non esiste, la funzione ritorna immediatamente nil.
+    Se il vertice esiste, la funzione segna il vertice come visitato 
+    utilizzando la funzione setf. 
+    Il vertice viene segnato come visitato nella HashTable *visited* che 
+    contiene lo stato di visita per ogni vertice.
+    Ritorna nil dopo aver segnato il vertice come visitato.
+
+
+(sssp-set-not-visited graph-id vertex-id)
+
+    Stessa cosa di sssp-set-visited ma imposta il vertice come non visitato.
+
+
+(sssp-is-visited graph-id vertex-id)
+
+    Questa funzione verifica se un vertice specifico è stato visitato in un 
+    grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id 
+    e l'ID del vertice vertex-id.
+    La funzione verifica prima se il vertice esiste nel grafo utilizzando la 
+    funzione is-vertex. 
+    Se il vertice non esiste, la funzione ritorna immediatamente nil.
+    Se il vertice esiste, la funzione verifica se il vertice è stato visitato 
+    utilizzando la funzione gethash.
+    Il vertice viene verificato nella HashTable *visited*
+    che contiene lo stato di visita per ogni vertice.
+    Ritorna t se il vertice è stato visitato, nil altrimenti.
+
+
+(sssp-reset graph-id)
+
+    Questa funzione resetta le distanze e lo stato di visita di tutti i vertici 
+    in un grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id. 
+    La funzione resetta la distanza e lo stato di visita di tutti i vertici nel 
+    grafo.
+    Questo viene fatto utilizzando la funzione maphash per iterare su tutti i 
+    vertici nella tabella hash *vertices*.
+    Ritorna nil dopo aver resettato le distanze e lo stato di visita dei 
+    vertici.
+
+
+(sssp-init-distance graph-id vertices source)
+
+    Questa funzione inizializza le distanze di tutti i vertici in un grafo 
+    specifico. 
+    Prende come argomenti l'ID del grafo (graph-id),
+    una lista di vertici (vertices) e un vertice sorgente (source).
+    La funzione utilizza la funzione mapc per iterare su tutti i vertici nella 
+    lista. 
+    Per ogni vertice, verifica se il vertice è il vertice sorgente.
+    Se è così, imposta la distanza del vertice sorgente a 0 utilizzando la 
+    funzione sssp-change-dist e inserisce il vertice sorgente nell'heap con una 
+    chiave di 0 utilizzando la funzione heap-insert.
+    Se il vertice non è il vertice sorgente, imposta la distanza del vertice a 
+    1000000 (infinito) utilizzando la funzione sssp-change-dist e inserisce il 
+    vertice nell'heap con una chiave di 1000000 (infinito) utilizzando la 
+    funzione heap-insert.
+    Ritorna nil dopo aver inizializzato le distanze dei vertici.
+
+
+(process-neighbors graph-id vertex-id neighbors)
+
+    Questa funzione elabora i vicini di un vertice specifico in un grafo 
+    specifico. 
+    Prende come argomenti l'ID del grafo graph-id,
+    l'ID del vertice vertex-id e una lista di vicini neighbors.
+    La funzione utilizza la funzione mapc per iterare su tutti i vicini nella 
+    lista.
+    Per ogni vicino, calcola la nuova distanza dal vertice sorgente al vicino 
+    come la somma della distanza dal vertice sorgente al vertice e il peso 
+    dell'arco tra il vertice e il vicino.
+    Se la nuova distanza è minore della distanza attuale dal vertice sorgente 
+    al vicino, la funzione aggiorna la distanza e il vertice precedente del 
+    vicino utilizzando le funzioni sssp-change-dist e sssp-change-previous, e 
+    modifica la chiave del vicino nell'heap utilizzando la funzione modify-key.
+    Ritorna nil dopo aver elaborato tutti i vicini.
+
+
+(dijkstra graph-id heap-id)
+
+    Questa funzione è la funzione di dijkstra ricorsiva che calcola le distanze 
+    di tutti i nodi.
+    Prende come argomenti l'ID del grafo graph-id e l'ID dell'heap heap-id.
+    La funzione verifica prima se l'heap è vuoto utilizzando la funzione 
+    heap-empty. 
+    Se l'heap è vuoto, la funzione ritorna immediatamente nil.
+    Se l'heap non è vuoto, la funzione ottiene i valori del vertice con la 
+    distanza minima dall'heap utilizzando la funzione heap-head,
+    ottiene i vicini del vertice utilizzando la funzione 
+    graph-vertex-neighbors, elabora le nuove distanze dai vicini utilizzando la 
+    funzione process-neighbors, segna il vertice come visitato utilizzando la 
+    funzione sssp-set-visited, e rimuove il vertice dall'heap utilizzando la 
+    funzione heap-extract.
+    La funzione continua a chiamare se stessa ricorsivamente fino a quando 
+    l'heap non è vuoto.
+    Ritorna nil dopo aver trovato i percorsi più brevi a tutti i vertici.
+
+
+(sssp-dijkstra graph-id source)
+
+    Questa funzione implementa l'algoritmo di Dijkstra per trovare il percorso 
+    più breve da un vertice sorgente a tutti gli altri vertici in un grafo 
+    specifico.
+    Prende come argomenti l'ID del grafo graph-id
+    e il vertice sorgente source.
+    Per prima cosa la funzione verifica se il vertice sorgente esiste nel grafo 
+    utilizzando la funzione is-vertex.
+    Poi Resetta le distanze e lo stato di visita di tutti i vertici nel grafo 
+    utilizzando la funzione sssp-reset.
+    Se esiste un heap associato al grafo, lo elimina utilizzando la funzione 
+    heap-delete.
+    Crea un nuovo heap associato al grafo con una capacità pari al numero di 
+    vertici nel grafo utilizzando la funzione new-heap.
+    Ottiene l'ID dell'heap associato al grafo, la lista di vertici nel grafo e 
+    la lista di vicini del vertice sorgente.
+    Inizializza le distanze di tutti i vertici nel grafo utilizzando la 
+    funzione sssp-init-distance.
+    Elabora i vicini del vertice sorgente utilizzando la funzione 
+    process-neighbors.
+    Estrae il vertice con la distanza minima dall'heap utilizzando la funzione 
+    heap-extract (quindi il vertice sorgente).
+    Segna il vertice sorgente come visitato utilizzando la funzione  
+    sssp-set-visited.
+    Chiama la funzione dijkstra per trovare i percorsi più brevi a tutti i 
+    vertici nel grafo.
+    Ritorna nil dopo aver trovato i percorsi più brevi a tutti i vertici.
+
+
+(build-path graph-id current-v previous-v path &optional start)
+
+    Questa funzione costruisce il percorso più breve da un vertice sorgente a 
+    un vertice specifico in un grafo specifico. 
+    Prende come argomenti l'ID del grafo graph-id,
+    il vertice attuale current-v,
+    il vertice precedente previous-v, 
+    il percorso attuale path e un flag opzionale start 
+    che indica se il vertice attuale è il vertice sorgente.
+    La funzione verifica prima se il vertice attuale è uguale al vertice 
+    precedente. Se è così, ritorna il percorso attuale.
+    Se il vertice attuale non è uguale al vertice precedente, la funzione 
+    ottiene l'arco tra il vertice precedente e il vertice attuale, aggiunge 
+    l'arco al percorso se l'arco esiste e il vertice attuale non è il vertice 
+    sorgente, e chiama se stessa ricorsivamente con il vertice precedente come 
+    nuovo vertice attuale e il vertice precedente del vertice precedente come 
+    nuovo vertice precedente.
+    Ritorna il percorso più breve dal vertice sorgente al vertice specifico 
+
+
+(shortest-path graph-id source dest)
+
+    Questa funzione trova il percorso più breve da un vertice sorgente a un 
+    vertice specifico in un grafo specifico utilizzando l'algoritmo di 
+    Dijkstra.
+    Prende come argomenti l'ID del grafo graph-id,
+    il vertice sorgente source e il vertice di destinazione (vertex-id).
+    La funzione verifica se il vertice sorgente e il vertice di destinazione 
+    esistono nel grafo utilizzando la funzione is-vertex.
+    Trova i percorsi più brevi da il vertice sorgente a tutti gli altri vertici 
+    nel grafo utilizzando la funzione sssp-dijkstra.
+    Costruisce il percorso più breve dal vertice sorgente al vertice di 
+    destinazione utilizzando la funzione build-path.
+    In poche parole è l'unione delle funzioni sssp-dijkstra e build-path
+    Ritorna il percorso più breve dal vertice sorgente al vertice di 
+    destinazione.
