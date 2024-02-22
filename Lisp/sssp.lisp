@@ -66,7 +66,7 @@
     (maphash (lambda (k v)
                (declare (ignore v))
                (when (and (listp k) (eq (first k) 'vertex) (eq (second k) graph-id))
-                 (push k vertex-list)))
+                 (setf vertex-list (cons k vertex-list))))
              *vertices*)
     vertex-list))
 
@@ -85,16 +85,16 @@
        (list 'edge graph-id vertex-id vertex-id2 1))))
 
 (defun graph-edges (graph-id)
-  (let ((vertex-list '()))
+  (let ((edge-list '()))
     (maphash (lambda (k v)
                (declare (ignore v))
                (when (and 
                       (listp k) 
                       (eq (first k) 'edge) 
                       (eq (second k) graph-id))
-                 (push k vertex-list)))
+                 (setf edge-list (cons k edge-list))))
              *edges*)
-    vertex-list))
+    edge-list))
 
 (defun get-weight (graph-id vertex-id vertex-id2)
   (if (not (and
@@ -111,7 +111,7 @@
                       (eq (first k) 'edge)
                       (eq (second k) graph-id)
                       (eq (third k) vertex-id))
-                 (push v neighbors))) *edges*)
+                 (setf neighbors (cons v neighbors)))) *edges*)
     neighbors))
 
 (defun graph-print (graph-id)
@@ -347,8 +347,8 @@
                   (sssp-change-dist graph-id source 0)
                   (heap-insert graph-id 0 source))
               (progn
-                (sssp-change-dist graph-id v 1000000)
-                (heap-insert graph-id 1000000 v)))))
+                (sssp-change-dist graph-id v most-positive-double-float)
+                (heap-insert graph-id most-positive-double-float v)))))
         vertices))
 
 (defun process-neighbors (graph-id vertex-id neighbors)
@@ -399,9 +399,9 @@
   (if (equal current-v previous-v)
       path
     (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
-      (when (and edge (not start))
-        (push edge path))
-      (build-path graph-id previous-v (sssp-previous graph-id previous-v) path))))
+      (if (and edge (not start))
+          (build-path graph-id previous-v (sssp-previous graph-id previous-v) (cons edge path))
+        (build-path graph-id previous-v (sssp-previous graph-id previous-v) path)))))
 
 (defun shortest-path (graph-id source dest)
   (is-vertex graph-id source)

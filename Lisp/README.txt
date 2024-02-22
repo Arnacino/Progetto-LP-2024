@@ -579,9 +579,9 @@ Progetto scritto da:
     funzione sssp-change-dist e inserisce il vertice sorgente nell'heap con una 
     chiave di 0 utilizzando la funzione heap-insert.
     Se il vertice non è il vertice sorgente, imposta la distanza del vertice a 
-    1000000 (infinito) utilizzando la funzione sssp-change-dist e inserisce il 
-    vertice nell'heap con una chiave di 1000000 (infinito) utilizzando la 
-    funzione heap-insert.
+    most-positive-double-float utilizzando la funzione sssp-change-dist e 
+    inserisce il vertice nell'heap con una chiave di most-positive-double-float
+    utilizzando la funzione heap-insert.
     Ritorna nil dopo aver inizializzato le distanze dei vertici.
 
 
