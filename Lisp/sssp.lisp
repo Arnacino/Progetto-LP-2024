@@ -2,7 +2,7 @@
 ;;Antonico Lorenzo 904775
 
 
-; -------------------------- Creazione Hash-Table ---------------------------- ;
+					; -------------------- Creazione Hash-Table ----------------------- ;
 
 
 (defparameter *vertices* (make-hash-table :test #'equal))
@@ -14,7 +14,7 @@
 (defparameter *heaps* (make-hash-table :test #'equal))
 
 
-; --------------------- Creazione e manipolazione grafi ---------------------- ;
+					; ---------------- Creazione e manipolazione grafi ----------------- ;
 
 
 (defun is-graph (graph-id)
@@ -65,7 +65,8 @@
   (let ((vertex-list '()))
     (maphash (lambda (k v)
                (declare (ignore v))
-               (when (and (listp k) (eq (first k) 'vertex) (eq (second k) graph-id))
+               (when (and (listp k) (eq (first k) 'vertex) (eq (second k) 
+               graph-id))
                  (setf vertex-list (cons k vertex-list))))
              *vertices*)
     vertex-list))
@@ -120,7 +121,7 @@
   (values))
 
 
-; ------------------------ Implementazione MinHeap -------------------------- ;
+					; -------------- Implementazione MinHeap ---------------- ;
 
 
 (defun new-heap (heap-id &optional capacity)
@@ -129,7 +130,8 @@
                  (numberp capacity)
                  (> capacity 0))
         (setf (gethash heap-id *heaps*) 
-              (list 'heap heap-id 0 (make-array capacity :initial-element nil))))
+              (list 'heap heap-id 0 (make-array capacity :initial-element 
+              nil))))
       (setf (gethash heap-id *heaps*) 
             (list 'heap heap-id 0 (make-array 42 :initial-element nil)))))
 
@@ -143,17 +145,17 @@
 
 (defun heap-size (heap-id) 
   (if (not (gethash heap-id *heaps*))
-    (return-from heap-size nil))
+      (return-from heap-size nil))
   (third (gethash heap-id *heaps*)))
 
 (defun heap-actual-heap (heap-id)
   (if (not (gethash heap-id *heaps*))
-    (return-from heap-actual-heap nil))
+      (return-from heap-actual-heap nil))
   (fourth (gethash heap-id *heaps*)))
 
 (defun heap-length (heap-id)
   (if (not (gethash heap-id *heaps*))
-    (return-from heap-length nil))
+      (return-from heap-length nil))
   (length (heap-actual-heap heap-id)))
 
 (defun set-heap-size (heap-id new-size)
@@ -294,7 +296,7 @@
   (values))
 
 
-; --------------------------- Algoritmo di Dijkstra ------------------------- ;
+					; -------------------- Algoritmo di Dijkstra ------------------ ;
 
 
 (defun sssp-dist (graph-id vertex-id)
@@ -331,13 +333,13 @@
   (gethash (list graph-id vertex-id) *visited*))
 
 (defun sssp-reset (graph-id)
-    (progn
-      (maphash (lambda (k v)
-                 (declare (ignore v))
-                 (when (and (listp k) (eq (second k) graph-id))
-                   (sssp-change-dist graph-id (third k) nil)
-                   (sssp-set-not-visited graph-id (third k))))
-               *vertices*)))
+  (progn
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (when (and (listp k) (eq (second k) graph-id))
+                 (sssp-change-dist graph-id (third k) nil)
+                 (sssp-set-not-visited graph-id (third k))))
+             *vertices*)))
 
 (defun sssp-init-distance (graph-id vertices source)
   (mapc (lambda (vertex)
@@ -346,9 +348,9 @@
                 (progn
                   (sssp-change-dist graph-id source 0)
                   (heap-insert graph-id 0 source))
-              (progn
-                (sssp-change-dist graph-id v most-positive-double-float)
-                (heap-insert graph-id most-positive-double-float v)))))
+		(progn
+                  (sssp-change-dist graph-id v most-positive-double-float)
+                  (heap-insert graph-id most-positive-double-float v)))))
         vertices))
 
 (defun process-neighbors (graph-id vertex-id neighbors)
@@ -365,7 +367,7 @@
                 (sssp-change-dist graph-id vDest newD)
                 (sssp-change-previous graph-id vDest vertex-id)
                 (modify-key graph-id newD oldD vDest))))
-       neighbors))
+	neighbors))
 
 (defun dijkstra (graph-id heap-id)
   (if (heap-empty heap-id)
@@ -382,7 +384,7 @@
   (is-vertex graph-id source)
   (sssp-reset graph-id)
   (if (heap-id graph-id)
-    (heap-delete (heap-id graph-id)))
+      (heap-delete (heap-id graph-id)))
   (new-heap graph-id (length (graph-vertices graph-id)))
   (let ((heap-id (heap-id graph-id))
         (vertices (graph-vertices graph-id))
@@ -398,10 +400,12 @@
   (is-vertex graph-id previous-v)
   (if (equal current-v previous-v)
       path
-    (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
-      (if (and edge (not start))
-          (build-path graph-id previous-v (sssp-previous graph-id previous-v) (cons edge path))
-        (build-path graph-id previous-v (sssp-previous graph-id previous-v) path)))))
+      (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
+	(if (and edge (not start))
+            (build-path graph-id previous-v (sssp-previous graph-id previous-v) 
+            (cons edge path))
+            (build-path graph-id previous-v (sssp-previous graph-id previous-v) 
+            path)))))
 
 (defun shortest-path (graph-id source dest)
   (is-vertex graph-id source)
