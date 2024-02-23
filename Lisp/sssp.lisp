@@ -2,7 +2,7 @@
 ;;Antonico Lorenzo 904775
 
 
-					; -------------------- Creazione Hash-Table ----------------------- ;
+;; -------------------- Creazione Hash-Table ----------------------- ;;
 
 
 (defparameter *vertices* (make-hash-table :test #'equal))
@@ -14,7 +14,7 @@
 (defparameter *heaps* (make-hash-table :test #'equal))
 
 
-					; ---------------- Creazione e manipolazione grafi ----------------- ;
+;; ---------------- Creazione e manipolazione grafi ----------------- ;;
 
 
 ;; Controlla se un grafo è presente nella tabella hash
@@ -75,7 +75,7 @@
     (maphash (lambda (k v)
                (declare (ignore v))
                (when (and (listp k) (eq (first k) 'vertex) (eq (second k) 
-               graph-id))
+							       graph-id))
                  (setf vertex-list (cons k vertex-list))))
              *vertices*)
     vertex-list))
@@ -136,7 +136,7 @@
   (values))
 
 
-					; -------------- Implementazione MinHeap ---------------- ;
+;; -------------- Implementazione MinHeap ---------------- ;;
 
 
 ;; Crea una nuova heap
@@ -147,7 +147,7 @@
                  (> capacity 0))
         (setf (gethash heap-id *heaps*) 
               (list 'heap heap-id 0 (make-array capacity :initial-element 
-              nil))))
+						nil))))
       (setf (gethash heap-id *heaps*) 
             (list 'heap heap-id 0 (make-array 42 :initial-element nil)))))
 
@@ -331,7 +331,7 @@
   (values))
 
 
-					; -------------------- Algoritmo di Dijkstra ------------------ ;
+;; -------------------- Algoritmo di Dijkstra ------------------ ;;
 
 
 ;; Ritorna la distanza di un vertice dalla sorgente
@@ -452,9 +452,9 @@
       (let ((edge (gethash (list 'edge graph-id previous-v current-v) *edges*)))
 	(if (and edge (not start))
             (build-path graph-id previous-v (sssp-previous graph-id previous-v) 
-            (cons edge path))
+			(cons edge path))
             (build-path graph-id previous-v (sssp-previous graph-id previous-v) 
-            path)))))
+			path)))))
 
 ;; Ritorna il percorso minimo dalla sorgente a un vertice
 (defun shortest-path (graph-id source dest)
